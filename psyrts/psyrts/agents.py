@@ -1,8 +1,6 @@
 from mesa import Agent
 from psyrts.random_walk import RandomWalker
 
-
-
 class Participant(RandomWalker):
     '''
     A Participant that walks around, reproduces (asexually) and gets eaten.
@@ -10,12 +8,10 @@ class Participant(RandomWalker):
     The init is the same as the RandomWalker.
     '''
 
-    energy = None
     withResources = False
 
-    def __init__(self, unique_id, pos, model, moore, energy=None):
+    def __init__(self, unique_id, pos, model, moore):
         super().__init__(unique_id, pos, model, moore=moore)
-        self.energy = energy
 
     def step(self):
         '''
@@ -24,47 +20,35 @@ class Participant(RandomWalker):
         self.random_move()
         living = True
 
-        if self.model.grass:
-            # Reduce energy
-            self.energy -= 1
 
-            # If there is grass available, eat it
+        if self.model.visibility:
             this_cell = self.model.grid.get_cell_list_contents([self.pos])
-            grass_patch = [obj for obj in this_cell
+            resourcesPlace = [obj for obj in this_cell
                            if isinstance(obj, Resources)][0]
-            if grass_patch.fully_grown:
-                self.energy += self.model.sheep_gain_from_food
-                grass_patch.fully_grown = False
+
 
             # Death
-            if self.energy < 0:
-                self.model.grid._remove_agent(self.pos, self)
-                self.model.schedule.remove(self)
-                living = False
-
-        if living and self.random.random() < self.model.sheep_reproduce:
-            # Create a new sheep:
-            if self.model.grass:
-                self.energy /= 2
-            lamb = Competitor(self.model.next_id(), self.pos, self.model,
-                              self.moore, self.energy)
-            self.model.grid.place_agent(lamb, self.pos)
-            self.model.schedule.add(lamb)
+            # if self.energy < 0:
+            #     self.model.grid._remove_agent(self.pos, self)
+            #     self.model.schedule.remove(self)
+            #     living = False
+            #
+            # lamb = Participant(self.model.next_id(), self.pos, self.model,
+            #                   self.moore, self.energy)
+            # self.model.grid.place_agent(lamb, self.pos)
+            # self.model.schedule.add(lamb)
 
 
 
 class Competitor(RandomWalker):
     '''
-    A Competitor that walks around, reproduces (asexually) and gets eaten.
-
+    A Competitor that walks around,
     The init is the same as the RandomWalker.
     '''
 
-    energy = None
-
-    def __init__(self, unique_id, pos, model, moore, energy=None):
+    def __init__(self, unique_id, pos, model, moore):
         super().__init__(unique_id, pos, model, moore=moore)
-        self.energy = energy
+
 
     def step(self):
         '''
@@ -75,44 +59,23 @@ class Competitor(RandomWalker):
 
 
 
-        if self.model.grass:
-            # print("Hay grass")
-            # # Reduce energy
-            # self.energy -= 1
+
             #
-            # # If there is grass available, eat it
-            # this_cell = self.model.grid.get_cell_list_contents([self.pos])
-            # grass_patch = [obj for obj in this_cell if isinstance(obj, Resources)][0]
-            # if grass_patch.fully_grown:
-            #     #self.energy += self.model.sheep_gain_from_food
-            #     grass_patch.fully_grown = False
-
-            # Death
-            if self.energy < 0:
-                self.model.grid._remove_agent(self.pos, self)
-                self.model.schedule.remove(self)
-                living = False
-
-        if living and self.random.random() < self.model.sheep_reproduce:
-            # Create a new sheep:
-            if self.model.grass:
-                self.energy /= 2
-            lamb = Competitor(self.model.next_id(), self.pos, self.model,
-                              self.moore, self.energy)
-            self.model.grid.place_agent(lamb, self.pos)
-            self.model.schedule.add(lamb)
+            # lamb = Competitor(self.model.next_id(), self.pos, self.model,
+            #                   self.moore, self.energy)
+            # self.model.grid.place_agent(lamb, self.pos)
+            # self.model.schedule.add(lamb)
 
 
 class Predator(RandomWalker):
     '''
-    A Predator that walks around, reproduces (asexually) and eats sheep.
+    A Predator that walks around
     '''
 
     energy = None
 
     def __init__(self, unique_id, pos, model, moore, energy=None):
         super().__init__(unique_id, pos, model, moore=moore)
-        self.energy = energy
 
     def step(self):
         self.random_move()
@@ -122,6 +85,7 @@ class Predator(RandomWalker):
         x, y = self.pos
         this_cell = self.model.grid.get_cell_list_contents([self.pos])
         sheep = [obj for obj in this_cell if isinstance(obj, Competitor) or isinstance(obj, Participant)]
+
         if len(sheep) > 0:
             sheep_to_eat = self.random.choice(sheep)
             #self.energy += self.model.wolf_gain_from_food
@@ -130,19 +94,6 @@ class Predator(RandomWalker):
             self.model.grid._remove_agent(self.pos, sheep_to_eat)
             self.model.schedule.remove(sheep_to_eat)
 
-        # Death or reproduction
-        '''if self.energy < 0:
-            self.model.grid._remove_agent(self.pos, self)
-            self.model.schedule.remove(self)
-        else:
-            if self.random.random() < self.model.wolf_reproduce:
-                # Create a new wolf cub
-                self.energy /= 2
-                cub = Predator(self.model.next_id(), self.pos, self.model,
-                           self.moore, self.energy)
-                self.model.grid.place_agent(cub, cub.pos)
-                self.model.schedule.add(cub)
-        '''
 
 
 class Resources(Agent):
@@ -150,7 +101,7 @@ class Resources(Agent):
     A patch of Resources that grows at a fixed rate and it is eaten by competitors and participants
     '''
 
-    def __init__(self, unique_id, pos, model, fully_grown, countdown):
+    def __init__(self, unique_id, pos, model, fully_grown, current_resources):
         '''
         Creates a new patch of grass
 
@@ -163,12 +114,5 @@ class Resources(Agent):
         #self.countdown = countdown
         self.pos = pos
 
-    def step(self):
-       ''' if not self.fully_grown:
-            if self.countdown <= 0:
-                # Set as fully grown
-                self.fully_grown = True
-                self.countdown = self.model.grass_regrowth_time
-            else:
-                self.countdown -= 1
-        '''
+    #def step(self):
+
