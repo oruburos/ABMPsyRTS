@@ -9,10 +9,10 @@ from psyrts.schedule import RandomActivationByBreed
 
 
 def exploration(model):
-    return number_visited( model) /324
+    return   (number_visited( model, True) )/328
 
 def exploitation(model):
-    return randrange(1, 10)
+    return   (number_visited( model, False) )/72
 
 
 def get_all_cell_contents(grid):
@@ -23,9 +23,25 @@ def iter_cell_list_contents( grid, cell_list):
         list_of_lists = [grid.G.node[node_id]['agent'] for node_id in cell_list if not grid.is_cell_empty(node_id)]
         return [item for sublist in list_of_lists for item in sublist]
 
-def number_visited(model):
-    return sum([1 for a in get_all_cell_contents(model.grid) if a.visited is True])
+def number_visited(model ,mode_exploration=True):
+    #return sum([1 for a in get_all_cell_contents(model.grid) if a.visited is True])
 
+
+    next_moves = []
+    if mode_exploration:
+        next_moves = model.locationsExploration
+    else:
+        next_moves = model.locationsExploitation
+    print( "size grid " + str(len(next_moves)))
+    visitadas = 0
+    for cells in next_moves:
+        this_cell = model.grid.get_cell_list_contents(cells)
+        for obj in this_cell:
+            if isinstance(obj, BreadCrumb):
+                if obj.visited:
+                    visitadas = visitadas + 1
+
+    return visitadas
 
 
 def resources_competitors(model):
@@ -74,28 +90,30 @@ class PsyRTSGame(Model):
         self.resourcesParticipants =0
         self.resourcesCompetitors = 0
 
+
+        self.TotalCells = next_moves = self.grid.get_neighborhood( (10,10), True, True, 11)
         locationsResources = [(4,3) , (16,3), (3,10) , (10,10),(17,10) , (16,17),(4,17)  ]
+
+        locationCPCompetitor = (10, 3)
+        locationCPParticipant = (10, 17)
+
+        self.locationsExploitation =[]
+
+        for loc in locationsResources:#resources
+            self.locationsExploitation = self.locationsExploitation + self.grid.get_neighborhood(loc, True, True,1)
+
+        #cfp
+        self.locationsExploitation = self.locationsExploitation + self.grid.get_neighborhood(locationCPParticipant, True, True, 1)
+        #print( "size grid exploiit " + str(len(self.locationsExploitation)))
+
+        self.locationsExploration =  list(set(self.TotalCells) - set(self.locationsExploitation))
+        #print("size grid explore " + str(len(self.locationsExploration)))
         locationsParticipants = [(10, 15), (13, 15), (7, 15), ( 8, 15), (12, 15)  ]
         locationsCompetitors = [(10, 5), (13, 5), (7, 5), ( 8, 5), (12, 5) ]
         locationsPredators = [(10, 10), (13, 10), (7, 10), ( 8, 10), (12, 10) ]
 
-        locationCPCompetitor = (10, 3)
-        locationCPParticipant= (10, 17)
-
-        # self.datacollector = DataCollector(
-        #     {"Predators": lambda m: m.schedule.get_breed_count(Predator),
-        #      "Competitors": lambda m: m.resourcesCompetitors,
-        #      "Explorers": lambda m: m.resourcesParticipant,
-        #      "Resources": lambda m: m.schedule.get_breed_count(Competitor)})
-
         self.datacollector = DataCollector(
-            {
-             # "Res Competitor": resources_competitors,
-             #  "Res Participant":   resources_participants
-            })
-
-        self.datacollector = DataCollector(
-            model_reporters={"Exploration": exploration , "Exploitation": exploitation})
+            model_reporters={"Exploration": exploration , "Exploitation": exploitation})   #reporto a datos
 
         centralplaceparticipant = CentralPlace(self.next_id(), locationCPParticipant, self, True)
         self.grid.place_agent(centralplaceparticipant, locationCPParticipant)

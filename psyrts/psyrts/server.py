@@ -4,7 +4,7 @@ from mesa.visualization.UserParam import UserSettableParameter
 
 from mesa.visualization.modules import TextElement
 from psyrts.agents import Predator, Competitor, Participant, Resources, CentralPlace, BreadCrumb
-from psyrts.model import PsyRTSGame, resources_competitors, resources_participants , exploration
+from psyrts.model import PsyRTSGame, resources_competitors, resources_participants , exploration, number_visited
 from mesa.batchrunner import BatchRunner
 
 def psyrtsPortrayal(agent):
@@ -72,11 +72,11 @@ class MyTextElement(TextElement):
     def render(self, model):
 
         totalResources = str(model.resources)
-       # exploration = str(exploration(model))
+        exploration = str(number_visited(model))
         resourcesParticipant = str(resources_participants(model))
         resourcesCompetitor = str(resources_competitors(model))
 
-        return "Total Resources: {}<br> Resources Participant:{} <br> Resources Competitor: {}".format( totalResources , resourcesParticipant , resourcesCompetitor)
+        return "Total Resources: {}<br> Resources Participant:{} <br> Resources Competitor: {} <br> Exploration :{}".format( totalResources , resourcesParticipant , resourcesCompetitor, exploration)
 
 model_params = {
                 "visibility": UserSettableParameter('checkbox', 'Total Visibility', False),
