@@ -169,6 +169,6 @@ class RandomWalker(Agent):
 
         next_move = (newx, newy)
 
-        print( "my pos " + str(self.pos) + " my goal " + str(direction) + " next move " + str(next_move))
+       # print( "my pos " + str(self.pos) + " my goal " + str(direction) + " next move " + str(next_move))
         self.model.grid.move_agent(self, next_move)
 

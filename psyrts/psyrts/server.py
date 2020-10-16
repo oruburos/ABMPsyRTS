@@ -4,7 +4,7 @@ from mesa.visualization.UserParam import UserSettableParameter
 
 from mesa.visualization.modules import TextElement
 from psyrts.agents import Predator, Competitor, Participant, Resources, CentralPlace, BreadCrumb
-from psyrts.model import PsyRTSGame, resources_competitors, resources_participants , exploration, number_visited
+from psyrts.model import PsyRTSGame, resources_competitors, resources_participants , exploration, number_visited, exploitation, resourcesRatio
 from mesa.batchrunner import BatchRunner
 
 def psyrtsPortrayal(agent):
@@ -63,7 +63,7 @@ def psyrtsPortrayal(agent):
 
 
 canvas_element = CanvasGrid(psyrtsPortrayal, 20, 20, 500, 500)
-chart_element = ChartModule([                           {"Label": "Exploration", "Color": "#00AA00"}    , {"Label": "Exploitation", "Color": "#0041FF"}             ]         )
+chart_element = ChartModule([                           {"Label": "Exploration", "Color": "#00AA00"}    , {"Label": "Exploitation", "Color": "#0041FF"}       , {"Label": "ResourcesRatio", "Color": "#FFAA22"}        ]         )
 
 
 
@@ -72,17 +72,23 @@ class MyTextElement(TextElement):
     def render(self, model):
 
         totalResources = str(model.resources)
-        exploration = str(number_visited(model))
+        explorationS = exploration(model)
+        exploitationS = exploitation(model)
+        resourceRatio = resourcesRatio(model)
+        if  explorationS+exploitationS == 0:
+            balance = ( explorationS-exploitationS) /.2
+        else:
+            balance = (explorationS - exploitationS) / ((explorationS + exploitationS))
         resourcesParticipant = str(resources_participants(model))
         resourcesCompetitor = str(resources_competitors(model))
 
-        return "Total Resources: {}<br> Resources Participant:{} <br> Resources Competitor: {} <br> Exploration :{}".format( totalResources , resourcesParticipant , resourcesCompetitor, exploration)
+        return "Total Resources: {}<br> Resources Participant:{} <br> Resources Competitor: {}  Ratio :{:2.3f}  <br> Exploration :{:2.3f} Exploitation:{:2.3f}  Balance:{:2.3f}".format( totalResources , resourcesParticipant , resourcesCompetitor, resourceRatio, explorationS, exploitationS, balance )
 
 model_params = {
-                "visibility": UserSettableParameter('checkbox', 'Total Visibility', False),
-                "initial_explorers": UserSettableParameter('slider', 'Number Explorers ' , 5, 1, 5),
+                "visibility": UserSettableParameter('checkbox', 'Total Visibility', True),
+                "initial_explorers": UserSettableParameter('slider', 'Number Explorers ' , 1, 1, 5),
                 "initial_competitors": UserSettableParameter('slider', 'Number Competitors ', 0, 0, 5),
-                "initial_predators": UserSettableParameter('slider', 'Number Predators ', 3, 0, 5),
+                "initial_predators": UserSettableParameter('slider', 'Number Predators ', 0, 0, 5),
 
                 }
 
@@ -98,13 +104,17 @@ server.port = 8521
 # var_model_params = {
 #                 "initial_predators": range(1, 5)
 #                 }
-#
+
 #
 # batch_run = BatchRunner (PsyRTSGame, fixed_parameters=model_params, variable_parameters= var_model_params, iterations=1, max_steps=10 )
 # batch_run.run_all()
 #
-# models = server.model
-# gini = models.datacollector.get_model_vars_dataframe()
+# #run_data = batch_run.get_model_vars_dataframe()
+# run_data = batch_run.get_model_vars_dataframe()
+# run_data.head()
 #
-# print(gini.describe())
-# gini.plot()
+# # models = server.model
+# # gini = models.datacollector.get_model_vars_dataframe()
+# #
+# # print(gini.describe())
+# # gini.plot()

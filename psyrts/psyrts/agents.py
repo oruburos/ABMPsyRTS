@@ -16,6 +16,13 @@ class Participant(RandomWalker):
         self.futurepos = (0, 0)
         self.goal()
 
+        self.predatorPerceived =False
+        self.competitorPerceived = False
+
+        self.threshold = 0.0
+
+
+
     def goal(self):
         x = randrange(0, 19)
         y = randrange(0, 19)
@@ -30,7 +37,7 @@ class Participant(RandomWalker):
 
         next_moves=[]
         if self.model.visibility:
-            next_moves = self.model.grid.get_neighborhood(self.pos, self.moore, True,2 )
+            next_moves = self.model.grid.get_neighborhood(self.pos, self.moore, True,3 )
 
         else:
             next_moves = self.model.grid.get_neighborhood(self.pos, self.moore, True, 1)
@@ -49,11 +56,23 @@ class Participant(RandomWalker):
     def seeCompetitor(self):
         return self.vision(Competitor)
 
+    def updateModel(self):
+
+        self.threshold = 0.0
+        if self.predatorPerceived:
+            self.threshold = self.threshold +.2
+        if self.competitorPerceived:
+            self.threshold =  self.threshold -.1
+        self. threshold =  self.threshold +self.model.noise
 
     def step(self):
         '''
         A model step. Move, then forage.
         '''
+
+        self.updateModel()
+
+
         enemy = self.seePredator()
         if enemy:
             print("Move away from predator")
@@ -64,10 +83,9 @@ class Participant(RandomWalker):
 
                 seeResources = self.seeResources()
                 if seeResources:
-                    noise = randrange(1, 3)
-                    print("Noise")
-                    if noise == 1:
-                        print("noise")
+                    noise = self.random.random()
+                    if noise < self.threshold:
+                       # print("uncertain")
                         self.random_move()
                     else:
                         self.move_towards(seeResources)
@@ -101,9 +119,9 @@ class Participant(RandomWalker):
 
                 #  print("go to central place")
 
-                noise = randrange(1, 4)
-
-                if noise == 1:
+                noise = self.random.random()
+                if noise < self.threshold:
+                   # print("uncertain")
                     self.random_move()
                 else:
                     self.move_towards(self.cp.pos)
@@ -186,9 +204,9 @@ class Competitor(RandomWalker):
             seeResources = self.seeResources()
             if seeResources:
                 noise = randrange(1, 2)
-                print("Noise")
+                #print("Noise")
                 if noise == 1:
-                    print("noise")
+                   # print("noise")
                     self.random_move()
                 self.move_towards(seeResources)
                 # If there are resources, forage
@@ -207,9 +225,9 @@ class Competitor(RandomWalker):
                         self.carrying = True
             else:
                 noise = randrange(1, 2)
-                print("Noise")
+                #print("Noise")
                 if noise == 1 :
-                    print("noise")
+                   # print("noise")
                     self.random_move()
                 else:
                     self.move_towards(self.futurepos)

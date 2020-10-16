@@ -7,21 +7,28 @@ from random import randrange, uniform
 from psyrts.agents import Competitor, Predator, Participant, Resources, CentralPlace, BreadCrumb
 from psyrts.schedule import RandomActivationByBreed
 
+# Start of datacollector functions
+def resourcesRatio(model):
+    if model.resourcesParticipants == 0:
+        return 0
+    else:
+        return  model.resourcesParticipants / model.resources
 
 def exploration(model):
     return   (number_visited( model, True) )/328
 
 def exploitation(model):
-    return   (number_visited( model, False) )/72
 
-
-def get_all_cell_contents(grid):
-    return list(grid.iter_cell_list_contents(grid.G))
-
-
-def iter_cell_list_contents( grid, cell_list):
-        list_of_lists = [grid.G.node[node_id]['agent'] for node_id in cell_list if not grid.is_cell_empty(node_id)]
-        return [item for sublist in list_of_lists for item in sublist]
+    return   ((number_visited( model, False) )/72) * resourcesRatio(model)
+#
+#
+# def get_all_cell_contents(grid):
+#     return list(grid.iter_cell_list_contents(grid.G))
+#
+#
+# def iter_cell_list_contents( grid, cell_list):
+#         list_of_lists = [grid.G.node[node_id]['agent'] for node_id in cell_list if not grid.is_cell_empty(node_id)]
+#         return [item for sublist in list_of_lists for item in sublist]
 
 def number_visited(model ,mode_exploration=True):
     #return sum([1 for a in get_all_cell_contents(model.grid) if a.visited is True])
@@ -32,7 +39,7 @@ def number_visited(model ,mode_exploration=True):
         next_moves = model.locationsExploration
     else:
         next_moves = model.locationsExploitation
-    print( "size grid " + str(len(next_moves)))
+  # print( "size grid " + str(len(next_moves)))
     visitadas = 0
     for cells in next_moves:
         this_cell = model.grid.get_cell_list_contents(cells)
@@ -62,7 +69,7 @@ class PsyRTSGame(Model):
     description = 'A model for simulating participants running the different experiments.'
 
     def __init__(self, height=20, width=20, visibility = False ,initial_competitors=1,
-                 initial_explorers=1, initial_predators=1,):
+                 initial_explorers=1, initial_predators=1):
         '''
         Create a new PsyRTS  model with the given parameters.
 
@@ -85,7 +92,7 @@ class PsyRTSGame(Model):
 
         self.schedule = RandomActivationByBreed(self)
         self.grid = MultiGrid(self.height, self.width, torus=False)
-
+        self.noise = 0.0
         self.resources= 0
         self.resourcesParticipants =0
         self.resourcesCompetitors = 0
@@ -113,7 +120,9 @@ class PsyRTSGame(Model):
         locationsPredators = [(10, 10), (13, 10), (7, 10), ( 8, 10), (12, 10) ]
 
         self.datacollector = DataCollector(
-            model_reporters={"Exploration": exploration , "Exploitation": exploitation})   #reporto a datos
+            model_reporters={"Exploration": exploration ,
+                             "Exploitation": exploitation,
+                              "ResourcesRatio": resourcesRatio})   #reporto a datos
 
         centralplaceparticipant = CentralPlace(self.next_id(), locationCPParticipant, self, True)
         self.grid.place_agent(centralplaceparticipant, locationCPParticipant)
@@ -143,9 +152,9 @@ class PsyRTSGame(Model):
 
         for pa in locationsResources:
              # randrange gives you an integral value
-             irand = randrange(1, 10)
+             irand = randrange(1, 11)
              #irand = 4
-           #  print("resource con valores {} ". format(  irand)  )
+             #print("resource con valores {} ". format(  irand)  )
              self.resources = self.resources + irand
              patch = Resources(self.next_id(), pa, self, irand)
              self.grid.place_agent(patch, pa)
@@ -161,8 +170,20 @@ class PsyRTSGame(Model):
         self.datacollector.collect(self)
 
 
+    def updateNoise(self):
+
+        if self.visibility:
+            self.noise = 0.4
+        else:
+            self.noise = 0.5
+
+        self.noise = self.noise + (( .03)*self.schedule.get_breed_count(Competitor))
+        self.noise = self.noise + ((.02) * self.schedule.get_breed_count(Predator))
+
     def step(self):
         self.schedule.step()
+
+        self.updateNoise()
         # collect data
         self.datacollector.collect(self)
         participantsAlive = self.schedule.get_breed_count(Participant)
