@@ -1,5 +1,6 @@
 from mesa import Agent
 from psyrts.random_walk import RandomWalker
+from random import randrange, uniform
 
 class Participant(RandomWalker):
     '''
@@ -12,30 +13,94 @@ class Participant(RandomWalker):
         super().__init__(unique_id, pos, model, moore=moore)
         self.carrying = False
         self.cp = cp
+        self.futurepos = (0, 0)
+        self.goal()
+
+    def goal(self):
+        x = randrange(0, 19)
+        y = randrange(0, 19)
+        self.futurepos = (x, y)
+
+    def seePredator(self):
+        return self.vision(Predator)
+
+
+    def vision(self, type):
+
+
+        next_moves=[]
+        if self.model.visibility:
+            next_moves = self.model.grid.get_neighborhood(self.pos, self.moore, True,2 )
+
+        else:
+            next_moves = self.model.grid.get_neighborhood(self.pos, self.moore, True, 1)
+
+        print("celdas que vi " + str(len(next_moves)))
+        for cells in next_moves:
+
+            this_cell = self.model.grid.get_cell_list_contents(cells)
+            for obj in this_cell:
+                if isinstance(obj, type):
+                    return obj.pos
+        return None
+
+    def seeResources(self):
+       return self.vision(Resources)
+
+    def seeCompetitor(self):
+        return self.vision(Competitor)
+
 
     def step(self):
         '''
-        A model step. Move, then eat grass and reproduce.
+        A model step. Move, then forage.
         '''
-        self.random_move()
-        living = True
+        enemy = self.seePredator()
+        if enemy:
+            print("Participant move away from enemy")
 
+            self.move_away(enemy)
+        if not self.carrying:
 
-        if self.model.visibility:
+            seeResources = self.seeResources()
+            if seeResources:
+                self.move_towards(seeResources)
+                # If there are resources, forage
+                this_cell = self.model.grid.get_cell_list_contents([self.pos])
+
+                for obj in this_cell:
+                    if isinstance(obj, Resources):
+                        resourcesPellet = obj
+                        resourcesP = resourcesPellet.resources
+                        if resourcesP > 3:
+                            resourcesPellet.resources = resourcesPellet.resources - 3
+                            self.resources = 3
+                        else:
+                            self.resources = resourcesP
+                            resourcesPellet.resources = 0
+                        self.carrying = True
+            else:
+
+                self.move_towards(self.futurepos)
+                if self.pos == self.futurepos:
+                    self.goal()
+        else:
+
+            #  print("go to central place")
+            self.move_towards(self.cp.pos)
+
+            print("Participant move to central place " + str(self.cp.pos))
             this_cell = self.model.grid.get_cell_list_contents([self.pos])
-            #resourcesPlace = [obj for obj in this_cell if isinstance(obj, Resources)][0]
-
-
-            # Death
-            # if self.energy < 0:
-            #     self.model.grid._remove_agent(self.pos, self)
-            #     self.model.schedule.remove(self)
-            #     living = False
-            #
-            # lamb = Participant(self.model.next_id(), self.pos, self.model,
-            #                   self.moore, self.energy)
-            # self.model.grid.place_agent(lamb, self.pos)
-            # self.model.schedule.add(lamb)
+            for obj in this_cell:
+                if isinstance(obj, CentralPlace):
+                    centralPlaceMine = obj
+                    if centralPlaceMine.fromParticipant:
+                        if centralPlaceMine == self.cp:
+                            centralPlaceMine.resources = centralPlaceMine.resources + self.resources
+                            self.resources = 0
+                            self.carrying = False
+                            self.model.resourcesParticipants = centralPlaceMine.resources
+                            print(" Actualizando resources participant " + str(self.model.resourcesParticipants))
 
 
 
@@ -49,72 +114,85 @@ class Competitor(RandomWalker):
         super().__init__(unique_id, pos, model, moore=moore )
         self.carrying = False
         self.cp = cp
+        self.futurepos = (0,0)
+        self.goal()
+
+    def goal(self):
+        x = randrange(0 , 19)
+        y = randrange(0 , 19)
+        self.futurepos = ( x,y)
+
 
     def seePredator(self):
-       next_moves = self.model.grid.get_neighborhood(self.pos, self.moore, True)
-       twicevision = []
-       if self.model.visibility:
-            for cellcerca in next_moves:
-                twicevision.append( self.model.grid.get_neighborhood( cellcerca, self.moore, True) )
-                twicevision.append(cellcerca)
-       else:
-           twicevision + next_moves
+        return self.vision(Predator)
 
 
+    def vision(self, type):
+        next_moves = []
+        if self.model.visibility:
+            next_moves = self.model.grid.get_neighborhood(self.pos, self.moore, True, 2)
 
+        else:
+            next_moves = self.model.grid.get_neighborhood(self.pos, self.moore, True, 1)
 
-       for cells in twicevision:
+        for cells in next_moves:
 
             this_cell = self.model.grid.get_cell_list_contents(cells)
             for obj in this_cell:
-                if isinstance(obj, Predator):
+                if isinstance(obj, type):
                     return obj.pos
+        return None
 
-       return None
-
+    def seeResources(self):
+       return self.vision(Resources)
 
     def step(self):
         '''
         A model step. Move, then forage.
         '''
 
-
         enemy = self.seePredator()
         if enemy:
             self.move_away(enemy)
-
-
         if not self.carrying:
-            self.random_move()
+            seeResources = self.seeResources()
+            if seeResources:
+                self.move_towards(seeResources)
+                # If there are resources, forage
+                this_cell = self.model.grid.get_cell_list_contents([self.pos])
 
-            # If there are resources, forage
-            this_cell = self.model.grid.get_cell_list_contents([self.pos])
-
-            for obj in this_cell:
-                if isinstance(obj, Resources):
-                    resourcesPellet = obj
-                    resourcesP = resourcesPellet.resources
-                    if resourcesP >3:
-                        resourcesPellet.resources = resourcesPellet.resources- 3
-                        self.resources = 3
-                    else:
-                        self.resources = resourcesP
-                        resourcesPellet.resources = 0
-                    self.carrying = True
+                for obj in this_cell:
+                    if isinstance(obj, Resources):
+                        resourcesPellet = obj
+                        resourcesP = resourcesPellet.resources
+                        if resourcesP >3:
+                            resourcesPellet.resources = resourcesPellet.resources- 3
+                            self.resources = 3
+                        else:
+                            self.resources = resourcesP
+                            resourcesPellet.resources = 0
+                        self.carrying = True
+            else:
+                self.move_towards(self.futurepos)
+                if self.pos == self.futurepos:
+                    self.goal()
         else:
-          #  print("go to central place")
-            self.move_towards( self.cp)
-            # If there are resources, forage
-            this_cell = self.model.grid.get_cell_list_contents([self.pos])
 
+          #  print("go to central place")
+            self.move_towards( self.cp.pos)
+
+            this_cell = self.model.grid.get_cell_list_contents([self.pos])
             for obj in this_cell:
                 if isinstance(obj, CentralPlace):
                     centralPlaceMine = obj
-                    centralPlaceMine.resources = centralPlaceMine.resources + self.resources
-                    self.resources= 0
-                    self.carrying =False
-                    self.model.resourcesCompetitors = centralPlaceMine.resources
-                    print(" Actualizando resources competitor " + str(self.model.resourcesCompetitors))
+                    if not centralPlaceMine.fromParticipant:
+                        if centralPlaceMine == self.cp:
+                            centralPlaceMine.resources = centralPlaceMine.resources + self.resources
+                            self.resources= 0
+                            self.carrying =False
+                            self.model.resourcesCompetitors = centralPlaceMine.resources
+                            print(" Actualizando resources competitor " + str(self.model.resourcesCompetitors))
+
 
 
 
@@ -126,8 +204,47 @@ class Predator(RandomWalker):
     def __init__(self, unique_id, pos, model, moore):
         super().__init__(unique_id, pos, model, moore=moore)
 
+        self.futurepos = (0, 0)
+        self.goal()
+
+
+    def goal(self):
+        x = randrange(0, 19)
+        y = randrange(0, 19)
+        self.futurepos = (x, y)
+
+
+
+
+    def seePrey(self):
+        next_moves = self.model.grid.get_neighborhood(self.pos, self.moore, True)
+
+        for cells in next_moves:
+
+            this_cell = self.model.grid.get_cell_list_contents(cells)
+            for obj in this_cell:
+                if isinstance(obj, Competitor) or isinstance(obj, Participant):
+                    return obj.pos
+
+        return None
+
     def step(self):
-        self.random_move()
+
+        posPrey = self.seePrey()
+
+        if posPrey:
+            #self.futurepos = posPrey
+            self.move_towards(posPrey)
+
+            kind = randrange(1,4)
+
+            if kind >3:
+                print("double")
+                self.move_towards(posPrey)
+        else:
+            kind= randrange(1, 10)
+            if kind == 1  :
+                self.random_move()
         x, y = self.pos
         this_cell = self.model.grid.get_cell_list_contents([self.pos])
         sheep = [obj for obj in this_cell if isinstance(obj, Competitor) or isinstance(obj, Participant)]

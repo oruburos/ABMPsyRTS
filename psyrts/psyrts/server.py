@@ -6,6 +6,7 @@ from mesa.visualization.modules import TextElement
 from psyrts.agents import Predator, Competitor, Participant, Resources, CentralPlace
 from psyrts.model import PsyRTSGame, resources_competitors, resources_participants
 
+
 def psyrtsPortrayal(agent):
     if agent is None:
         return
@@ -45,8 +46,8 @@ def psyrtsPortrayal(agent):
         portrayal["Layer"] = 0
         portrayal["r"] = 1.8
 
-
-
+    else:
+        portrayal["Color"] = ["#AAAADD"]
 
     return portrayal
 
@@ -69,8 +70,9 @@ class MyTextElement(TextElement):
 model_params = {
                 "visibility": UserSettableParameter('checkbox', 'Total Visibility', True),
                 "initial_explorers": UserSettableParameter('slider', 'Number Explorers ' , 1, 1, 5),
-                "initial_competitors": UserSettableParameter('slider', 'Number Competitors ', 5, 0, 5),
+                "initial_competitors": UserSettableParameter('slider', 'Number Competitors ', 0, 0, 5),
                 "initial_predators": UserSettableParameter('slider', 'Number Predators ', 0, 0, 5),
+
                 }
 
 server = ModularServer(PsyRTSGame, [canvas_element, MyTextElement() , chart_element], "PsyRTS Module", model_params)

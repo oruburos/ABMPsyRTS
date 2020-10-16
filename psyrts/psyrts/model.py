@@ -1,19 +1,8 @@
-'''
-Wolf-Sheep Predation Model
-================================
-
-Replication of the model found in NetLogo:
-    Wilensky, U. (1997). NetLogo Wolf Sheep Predation model.
-    http://ccl.northwestern.edu/netlogo/models/WolfSheepPredation.
-    Center for Connected Learning and Computer-Based Modeling,
-    Northwestern University, Evanston, IL.
-'''
 
 from mesa import Model
 from mesa.space import MultiGrid
 from mesa.datacollection import DataCollector
 from random import randrange, uniform
-
 
 from psyrts.agents import Competitor, Predator, Participant, Resources, CentralPlace
 from psyrts.schedule import RandomActivationByBreed
@@ -53,6 +42,8 @@ class PsyRTSGame(Model):
             visibility : total or partial visibility
         '''
         super().__init__()
+
+        self.fps = 0
         # Set parameters
         self.height = height
         self.width = width
@@ -88,7 +79,7 @@ class PsyRTSGame(Model):
              #  "Res Participant":   resources_participants
             })
 
-        centralplaceparticipant = CentralPlace(self.next_id(), locationCPParticipant, self)
+        centralplaceparticipant = CentralPlace(self.next_id(), locationCPParticipant, self, True)
         self.grid.place_agent(centralplaceparticipant, locationCPParticipant)
         self.schedule.add(centralplaceparticipant)
 
@@ -116,8 +107,8 @@ class PsyRTSGame(Model):
 
         for pa in locationsResources:
              # randrange gives you an integral value
-            # irand = randrange(1, 10)
-             irand = 4
+             irand = randrange(1, 10)
+             #irand = 4
            #  print("resource con valores {} ". format(  irand)  )
              self.resources = self.resources + irand
              patch = Resources(self.next_id(), pa, self, irand)
@@ -138,10 +129,19 @@ class PsyRTSGame(Model):
             print("Stop Participants dead")
             self.running = False
 
+        # pellets = self.schedule.get_breed_count(Resources)
+        # if pellets <=0:
+        #     print("No more resources")
+        #     self.running = False
+
+
+
         if self.resourcesCompetitors +self.resourcesParticipants == self.resources:
             print("Stop No More Resources")
             self.running = False
 
+        if self.schedule.steps>100:
+            self.running = False
         # if self.verbose:
         #     print([self.schedule.time,
         #            self.schedule.get_breed_count(Predator),
