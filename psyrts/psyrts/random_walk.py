@@ -40,3 +40,35 @@ class RandomWalker(Agent):
         next_move = self.random.choice(next_moves)
         # Now move:
         self.model.grid.move_agent(self, next_move)
+
+    def move_towards(self, cosa):
+
+        posactual = self.pos
+        newx= 0
+        newy = 0
+        direction =cosa.pos
+        if posactual[0] == direction[0]:
+            if posactual[1] < direction[1]:
+                newx =posactual[0]
+                newy = posactual[1]+1
+            else:
+                newx = posactual[0]
+                newy = posactual[1] - 1
+        elif posactual[0] < direction[0]:
+            if posactual[1] < direction[1]:
+                newx = posactual[0] +1
+                newy = posactual[1] + 1
+            else:
+                newx = posactual[0] +1
+                newy = posactual[1] - 1
+        else:
+            if posactual[1] < direction[1]:
+                newx = posactual[0] -1
+                newy = posactual[1] + 1
+            else:
+                newx = posactual[0] -1
+                newy = posactual[1] - 1
+        next_move = (newx, newy)
+
+        print( "my pos " + str(self.pos) + " my goal " + str(direction) + " next move " + str(next_move))
+        self.model.grid.move_agent(self, next_move)

@@ -12,8 +12,10 @@ Replication of the model found in NetLogo:
 from mesa import Model
 from mesa.space import MultiGrid
 from mesa.datacollection import DataCollector
+from random import randrange, uniform
 
-from psyrts.agents import Competitor, Predator, Participant, Resources
+
+from psyrts.agents import Competitor, Predator, Participant, Resources, CentralPlace
 from psyrts.schedule import RandomActivationByBreed
 
 
@@ -26,8 +28,10 @@ class PsyRTSGame(Model):
     initial_wolves = 1
     initial_participants = 1
     visibility = False
-
     verbose = False  # Print-monitoring
+
+
+
 
     description = 'A model for simulating participants running the different experiments.'
 
@@ -36,7 +40,7 @@ class PsyRTSGame(Model):
         '''
         Create a new PsyRTS  model with the given parameters.
 
-        Args:
+        Args
             initial_competitors: Number of units each participant knows
             initial_explorers: Number of sheep to start with
             initial_predators: Number of wolves to start with
@@ -54,12 +58,17 @@ class PsyRTSGame(Model):
         self.schedule = RandomActivationByBreed(self)
         self.grid = MultiGrid(self.height, self.width, torus=False)
 
+        self.resources= 0
+        self.resourcesParticipant =0
+        self.resourcesCompetitors = 0
 
+        locationsResources = [(4,3) , (16,3), (3,10) , (10,10),(17,10) , (16,17),(4,17)  ]
+        locationsParticipants = [(10, 15), (13, 15), (7, 15), ( 8, 15), (12, 15)  ]
+        locationsCompetitors = [(10, 5), (13, 5), (7, 5), ( 8, 5), (12, 5) ]
+        locationsPredators = [(10, 10), (13, 10), (7, 10), ( 8, 10), (12, 10) ]
 
-        locationsResources = [(4,3) , (16,3), (3,10) , (10,10),(17,10) , (16,17),(4,17) , ]
-        locationsParticipants = [(4, 3), (16, 3), (3, 10), (10, 10), (17, 10), (16, 17), (4, 17), ]
-        locationsCompetitors = [(4, 3), (16, 3), (3, 10), (10, 10), (17, 10), (16, 17), (4, 17), ]
-        locationsPredators = [(4, 3), (16, 3), (3, 10), (10, 10), (17, 10), (16, 17), (4, 17), ]
+        locationCPCompetitor = (10, 3)
+        locationCPParticipant= (10, 17)
 
         self.datacollector = DataCollector(
             {"Predators": lambda m: m.schedule.get_breed_count(Predator),
@@ -67,68 +76,71 @@ class PsyRTSGame(Model):
              "Explorers": lambda m: m.schedule.get_breed_count(Participant),
              "Resources": lambda m: m.schedule.get_breed_count(Competitor)})
 
+        centralplaceparticipant = CentralPlace(self.next_id(), locationCPParticipant, self)
+        self.grid.place_agent(centralplaceparticipant, locationCPParticipant)
+        self.schedule.add(centralplaceparticipant)
 
-
+        centralplacecompetitor = CentralPlace(self.next_id(), locationCPCompetitor, self, False)
+        self.grid.place_agent(centralplacecompetitor, locationCPCompetitor)
+        self.schedule.add(centralplacecompetitor)
 
         # Create competitor:
         for i in range(self.initial_competitors):
-            x = self.random.randrange(self.width)
-            y = self.random.randrange(self.height)
-            sheep = Competitor(self.next_id(), (x, y), self, True)
-            self.grid.place_agent(sheep, (x, y))
+            sheep = Competitor(self.next_id(), locationsCompetitors[i], self, True, centralplacecompetitor)
+            self.grid.place_agent(sheep, locationsCompetitors[i])
             self.schedule.add(sheep)
 
-            # Create explorers:
-            for i in range(self.initial_explorers):
-                x = self.random.randrange(self.width)
-                y = self.random.randrange(self.height)
-                sheep = Participant(self.next_id(), (x, y), self, True)
-                self.grid.place_agent(sheep, (x, y))
-                self.schedule.add(sheep)
+        # Create explorers:
+        for i in range(self.initial_explorers):
+            sheep = Participant(self.next_id(), locationsParticipants[i], self, True, centralplaceparticipant)
+            self.grid.place_agent(sheep, locationsParticipants[i])
+            self.schedule.add(sheep)
 
         # Create predators
         for i in range(self.initial_predators):
-            x = self.random.randrange(self.width)
-            y = self.random.randrange(self.height)
-
-            wolf = Predator(self.next_id(), (x, y), self, True, 222)
-            self.grid.place_agent(wolf, (x, y))
+            wolf = Predator(self.next_id(), locationsPredators[i], self, True)
+            self.grid.place_agent(wolf, locationsPredators[i])
             self.schedule.add(wolf)
-
-
 
         for pa in locationsResources:
              fully_grown = True
-             patch = Resources(self.next_id(), pa, self,fully_grown, 0)
+             # randrange gives you an integral value
+             irand = randrange(0, 10)
+             print("resource con valores {} ". format(  irand)  )
+             self.resources = self.resources + irand
+             patch = Resources(self.next_id(), pa, self,fully_grown, irand)
              self.grid.place_agent(patch, pa)
              self.schedule.add(patch)
+
+
+
 
         self.running = True
         self.datacollector.collect(self)
 
+
     def step(self):
         self.schedule.step()
+        if 30 == self.step:
+            self.running = False
         # collect data
         self.datacollector.collect(self)
+        participantsAlive = self.schedule.get_breed_count(Participant)
+        if participantsAlive <=0:
+            print("Stop")
+            self.running = False
         if self.verbose:
             print([self.schedule.time,
                    self.schedule.get_breed_count(Predator),
                    self.schedule.get_breed_count(Competitor)])
 
     def run_model(self, step_count=300):
-
-        if self.verbose:
-            print('Initial number predators: ',
-                  self.schedule.get_breed_count(Predator))
-            print('Initial number competitors: ',
-                  self.schedule.get_breed_count(Competitor))
-
         for i in range(step_count):
             self.step()
 
         if self.verbose:
             print('')
-            print('Resources by Participant: ',   self.schedule.get_breed_count(Predator))
+            print('Resources by Participant: ',   self.schedule.get_breed_count(Participant))
             print('Resources by Competitors: ',   self.schedule.get_breed_count(Competitor))
-            print('Explorers Alive: ', self.schedule.get_breed_count(Competitor))
+            print('Explorers Alive: ', self.schedule.get_breed_count(Participant))
             print('Competitors Alive: ', self.schedule.get_breed_count(Competitor))
