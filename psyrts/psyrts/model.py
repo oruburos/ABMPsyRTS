@@ -19,6 +19,12 @@ from psyrts.agents import Competitor, Predator, Participant, Resources, CentralP
 from psyrts.schedule import RandomActivationByBreed
 
 
+def resources_competitors(model):
+    return model.resourcesCompetitors
+
+def resources_participants(model):
+    return model.resourcesParticipants
+
 class PsyRTSGame(Model):
 
 
@@ -59,7 +65,7 @@ class PsyRTSGame(Model):
         self.grid = MultiGrid(self.height, self.width, torus=False)
 
         self.resources= 0
-        self.resourcesParticipant =0
+        self.resourcesParticipants =0
         self.resourcesCompetitors = 0
 
         locationsResources = [(4,3) , (16,3), (3,10) , (10,10),(17,10) , (16,17),(4,17)  ]
@@ -70,11 +76,17 @@ class PsyRTSGame(Model):
         locationCPCompetitor = (10, 3)
         locationCPParticipant= (10, 17)
 
+        # self.datacollector = DataCollector(
+        #     {"Predators": lambda m: m.schedule.get_breed_count(Predator),
+        #      "Competitors": lambda m: m.resourcesCompetitors,
+        #      "Explorers": lambda m: m.resourcesParticipant,
+        #      "Resources": lambda m: m.schedule.get_breed_count(Competitor)})
+
         self.datacollector = DataCollector(
-            {"Predators": lambda m: m.schedule.get_breed_count(Predator),
-             "Competitors": lambda m: m.schedule.get_breed_count(Competitor),
-             "Explorers": lambda m: m.schedule.get_breed_count(Participant),
-             "Resources": lambda m: m.schedule.get_breed_count(Competitor)})
+            {
+             # "Res Competitor": resources_competitors,
+             #  "Res Participant":   resources_participants
+            })
 
         centralplaceparticipant = CentralPlace(self.next_id(), locationCPParticipant, self)
         self.grid.place_agent(centralplaceparticipant, locationCPParticipant)
@@ -103,16 +115,14 @@ class PsyRTSGame(Model):
             self.schedule.add(wolf)
 
         for pa in locationsResources:
-             fully_grown = True
              # randrange gives you an integral value
-             irand = randrange(0, 10)
-             print("resource con valores {} ". format(  irand)  )
+            # irand = randrange(1, 10)
+             irand = 4
+           #  print("resource con valores {} ". format(  irand)  )
              self.resources = self.resources + irand
-             patch = Resources(self.next_id(), pa, self,fully_grown, irand)
+             patch = Resources(self.next_id(), pa, self, irand)
              self.grid.place_agent(patch, pa)
              self.schedule.add(patch)
-
-
 
 
         self.running = True
@@ -121,26 +131,29 @@ class PsyRTSGame(Model):
 
     def step(self):
         self.schedule.step()
-        if 30 == self.step:
-            self.running = False
         # collect data
         self.datacollector.collect(self)
         participantsAlive = self.schedule.get_breed_count(Participant)
         if participantsAlive <=0:
-            print("Stop")
+            print("Stop Participants dead")
             self.running = False
-        if self.verbose:
-            print([self.schedule.time,
-                   self.schedule.get_breed_count(Predator),
-                   self.schedule.get_breed_count(Competitor)])
+
+        if self.resourcesCompetitors +self.resourcesParticipants == self.resources:
+            print("Stop No More Resources")
+            self.running = False
+
+        # if self.verbose:
+        #     print([self.schedule.time,
+        #            self.schedule.get_breed_count(Predator),
+        #            self.schedule.get_breed_count(Competitor)])
 
     def run_model(self, step_count=300):
         for i in range(step_count):
             self.step()
 
-        if self.verbose:
-            print('')
-            print('Resources by Participant: ',   self.schedule.get_breed_count(Participant))
-            print('Resources by Competitors: ',   self.schedule.get_breed_count(Competitor))
-            print('Explorers Alive: ', self.schedule.get_breed_count(Participant))
-            print('Competitors Alive: ', self.schedule.get_breed_count(Competitor))
+        # if self.verbose:
+        #     print('')
+        #     print('Resources by Participant: ',   self.schedule.get_breed_count(Participant))
+        #     print('Resources by Competitors: ',   self.schedule.get_breed_count(Competitor))
+        #     print('Explorers Alive: ', self.schedule.get_breed_count(Participant))
+        #     print('Competitors Alive: ', self.schedule.get_breed_count(Competitor))

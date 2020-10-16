@@ -4,7 +4,7 @@ from mesa.visualization.UserParam import UserSettableParameter
 
 from mesa.visualization.modules import TextElement
 from psyrts.agents import Predator, Competitor, Participant, Resources, CentralPlace
-from psyrts.model import PsyRTSGame
+from psyrts.model import PsyRTSGame, resources_competitors, resources_participants
 
 def psyrtsPortrayal(agent):
     if agent is None:
@@ -14,27 +14,22 @@ def psyrtsPortrayal(agent):
 
     if type(agent) is Competitor:
         portrayal["Shape"] = "psyrts/resources/competitor.png"
-        portrayal["scale"] = 0.9
+        portrayal["scale"] = 0.6
         portrayal["Layer"] = 3
 
     elif type(agent) is Participant:
         portrayal["Shape"] = "psyrts/resources/explorer.png"
-
-        portrayal["scale"] = 0.9
+        portrayal["scale"] = 0.6
         portrayal["Layer"] = 1
 
     elif type(agent) is Predator:
         portrayal["Shape"] = "psyrts/resources/predator.png"
-
         portrayal["scale"] = 0.9
         portrayal["Layer"] = 2
         portrayal["text_color"] = "White"
 
     elif type(agent) is Resources:
-        if agent.fully_grown:
-            portrayal["Color"] = ["#12af44"]
-        else:
-            portrayal["Color"] = ["#84e184"]
+        portrayal["Color"] = ["#12af44"]
         portrayal["Shape"] = "circle"
         portrayal["Filled"] = "true"
         portrayal["Layer"] = 0
@@ -57,8 +52,7 @@ def psyrtsPortrayal(agent):
 
 
 canvas_element = CanvasGrid(psyrtsPortrayal, 20, 20, 500, 500)
-chart_element = ChartModule([                           {"Label": "Participant", "Color": "#00AA00"},{"Label": "Predators", "Color": "#AA0000"},
-                             {"Label": "Competitors", "Color": "#061166"}])
+chart_element = ChartModule([                           {"Label": "Resources Competitor", "Color": "#00AA00"}                ]         )
 
 
 
@@ -67,8 +61,9 @@ class MyTextElement(TextElement):
     def render(self, model):
 
         totalResources = str(model.resources)
-        resourcesParticipant = str(model.resourcesParticipant)
-        resourcesCompetitor = str(model.resourcesCompetitors)
+        resourcesParticipant = str(resources_participants(model))
+        resourcesCompetitor = str(resources_competitors(model))
+
         return "Total Resources: {}<br> Resources Participant:{} <br> Resources Competitor: {}".format( totalResources , resourcesParticipant , resourcesCompetitor)
 
 model_params = {

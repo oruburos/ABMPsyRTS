@@ -70,5 +70,67 @@ class RandomWalker(Agent):
                 newy = posactual[1] - 1
         next_move = (newx, newy)
 
-        print( "my pos " + str(self.pos) + " my goal " + str(direction) + " next move " + str(next_move))
+        #print( "my pos " + str(self.pos) + " my goal " + str(direction) + " next move " + str(next_move))
         self.model.grid.move_agent(self, next_move)
+
+    def move_away(self, cosa):
+
+        posactual = self.pos
+        newx= 0
+        newy = 0
+        direction = cosa
+        if posactual[0] == direction[0]:
+            if posactual[1] < direction[1]:
+                newx =posactual[0]
+                newy = posactual[1]-1
+                if newy<0:
+                    newy=0
+            else:
+                newx = posactual[0]
+                newy = posactual[1] + 1
+                if newy>19:
+                    newy=19
+        elif posactual[0] < direction[0]:
+            if posactual[1] < direction[1]:
+                newx = posactual[0] -1
+                newy = posactual[1] - 1
+
+                if newx<0:
+                    newx=0
+                if newy < 0:
+                   newy = 0
+            else:
+                newx = posactual[0] -1
+                newy = posactual[1] + 1
+
+
+                if newx<0:
+                    newx=0
+                if newy > 19:
+                   newy = 19
+
+
+
+        else:
+            if posactual[1] < direction[1]:
+                newx = posactual[0] +1
+                newy = posactual[1] - 1
+                if newx > 19:
+                    newx = 19
+                if newy < 0:
+                   newy = 0
+
+            else:
+                newx = posactual[0] +1
+                newy = posactual[1] + 1
+
+                if newx > 19:
+                    newx = 19
+                if newy > 19:
+                    newy = 19
+
+        next_move = (newx, newy)
+
+        #print( "my pos " + str(self.pos) + " my goal " + str(direction) + " next move " + str(next_move))
+        self.model.grid.move_agent(self, next_move)
+

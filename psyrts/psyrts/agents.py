@@ -8,8 +8,6 @@ class Participant(RandomWalker):
     The init is the same as the RandomWalker.
     '''
 
-    withResources = False
-
     def __init__(self, unique_id, pos, model, moore , cp):
         super().__init__(unique_id, pos, model, moore=moore)
         self.carrying = False
@@ -51,10 +49,40 @@ class Competitor(RandomWalker):
         super().__init__(unique_id, pos, model, moore=moore )
         self.carrying = False
         self.cp = cp
+
+    def seePredator(self):
+       next_moves = self.model.grid.get_neighborhood(self.pos, self.moore, True)
+       twicevision = []
+       if self.model.visibility:
+            for cellcerca in next_moves:
+                twicevision.append( self.model.grid.get_neighborhood( cellcerca, self.moore, True) )
+                twicevision.append(cellcerca)
+       else:
+           twicevision + next_moves
+
+
+
+
+       for cells in twicevision:
+
+            this_cell = self.model.grid.get_cell_list_contents(cells)
+            for obj in this_cell:
+                if isinstance(obj, Predator):
+                    return obj.pos
+
+       return None
+
+
     def step(self):
         '''
-        A model step. Move, then eat grass and reproduce.
+        A model step. Move, then forage.
         '''
+
+
+        enemy = self.seePredator()
+        if enemy:
+            self.move_away(enemy)
+
 
         if not self.carrying:
             self.random_move()
@@ -62,21 +90,19 @@ class Competitor(RandomWalker):
             # If there are resources, forage
             this_cell = self.model.grid.get_cell_list_contents([self.pos])
 
-
-
             for obj in this_cell:
                 if isinstance(obj, Resources):
                     resourcesPellet = obj
                     resourcesP = resourcesPellet.resources
                     if resourcesP >3:
                         resourcesPellet.resources = resourcesPellet.resources- 3
-                        self.resources = resourcesP
+                        self.resources = 3
                     else:
                         self.resources = resourcesP
                         resourcesPellet.resources = 0
                     self.carrying = True
         else:
-            print("go to central place")
+          #  print("go to central place")
             self.move_towards( self.cp)
             # If there are resources, forage
             this_cell = self.model.grid.get_cell_list_contents([self.pos])
@@ -87,22 +113,21 @@ class Competitor(RandomWalker):
                     centralPlaceMine.resources = centralPlaceMine.resources + self.resources
                     self.resources= 0
                     self.carrying =False
-                    self.model.resourcesCompetitor =centralPlaceMine.resources
-                    print(" Actualizando resources competitor " + str(centralPlaceMine.resources))
+                    self.model.resourcesCompetitors = centralPlaceMine.resources
+                    print(" Actualizando resources competitor " + str(self.model.resourcesCompetitors))
+
+
+
 
 class Predator(RandomWalker):
     '''
     A Predator that walks around
     '''
-
     def __init__(self, unique_id, pos, model, moore):
         super().__init__(unique_id, pos, model, moore=moore)
 
     def step(self):
         self.random_move()
-
-
-
         x, y = self.pos
         this_cell = self.model.grid.get_cell_list_contents([self.pos])
         sheep = [obj for obj in this_cell if isinstance(obj, Competitor) or isinstance(obj, Participant)]
@@ -115,27 +140,19 @@ class Predator(RandomWalker):
 
 class Resources(Agent):
     '''
-    A patch of Resources that grows at a fixed rate and it is eaten by competitors and participants
+    A patch of Resources that is foraged by competitors and participants
     '''
 
-    def __init__(self, unique_id, pos, model, fully_grown, current_resources):
+    def __init__(self, unique_id, pos, model,  current_resources):
         '''
-        Creates a new patch of grass
-
-        Args:
-            grown: (boolean) Whether the patch of grass is fully grown or not
-            countdown: Time for the patch of grass to be fully grown again
         '''
         super().__init__(unique_id, model)
-        self.fully_grown = True
         self.resources = current_resources
         self.pos = pos
-
     def step(self):
         if self.resources <= 0:
             self.model.grid._remove_agent(self.pos, self)
             self.model.schedule.remove(self)
-
 
 class CentralPlace(Agent):
     '''
@@ -145,7 +162,6 @@ class CentralPlace(Agent):
     def __init__(self, unique_id, pos, model, fromParticipant=True):
         '''
         Creates a new patch of grass
-
         Args:
             grown: (boolean) Whether the patch of grass is fully grown or not
             countdown: Time for the patch of grass to be fully grown again
@@ -155,6 +171,5 @@ class CentralPlace(Agent):
         self.fromParticipant = fromParticipant
         self.pos = pos
 
-    #def step(self):
 
 
