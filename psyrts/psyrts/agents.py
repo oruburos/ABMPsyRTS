@@ -75,7 +75,7 @@ class Participant(RandomWalker):
 
         enemy = self.seePredator()
         if enemy:
-            print("Move away from predator")
+            #print("Move away from predator")
             self.move_away(enemy)
 
         else:

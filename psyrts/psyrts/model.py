@@ -3,7 +3,7 @@ from mesa import Model
 from mesa.space import MultiGrid
 from mesa.datacollection import DataCollector
 from random import randrange, uniform
-
+import itertools
 from psyrts.agents import Competitor, Predator, Participant, Resources, CentralPlace, BreadCrumb
 from psyrts.schedule import RandomActivationByBreed
 
@@ -17,22 +17,16 @@ def resourcesRatio(model):
 def exploration(model):
     return   (number_visited( model, True) )/328
 
+
+
+
+
 def exploitation(model):
 
     return   ((number_visited( model, False) )/72) * resourcesRatio(model)
-#
-#
-# def get_all_cell_contents(grid):
-#     return list(grid.iter_cell_list_contents(grid.G))
-#
-#
-# def iter_cell_list_contents( grid, cell_list):
-#         list_of_lists = [grid.G.node[node_id]['agent'] for node_id in cell_list if not grid.is_cell_empty(node_id)]
-#         return [item for sublist in list_of_lists for item in sublist]
+
 
 def number_visited(model ,mode_exploration=True):
-    #return sum([1 for a in get_all_cell_contents(model.grid) if a.visited is True])
-
 
     next_moves = []
     if mode_exploration:
@@ -57,8 +51,25 @@ def resources_competitors(model):
 def resources_participants(model):
     return model.resourcesParticipants
 
-class PsyRTSGame(Model):
 
+
+def track_params(model):
+    return (model.initial_competitors,
+            model.initial_explorers,
+            model.initial_predators,
+            model.visibility)
+
+def track_run(model):
+    return model.schedule.steps
+
+def track_experiment(model):
+    return model.uid
+
+
+
+class PsyRTSGame(Model):
+    # id generator to track run number in batch run data
+    id_gen = itertools.count(1)
 
     height = 20
     width = 20
@@ -80,7 +91,7 @@ class PsyRTSGame(Model):
             visibility : total or partial visibility
         '''
         super().__init__()
-
+        self.uid = next(self.id_gen)
         self.fps = 0
         # Set parameters
         self.height = height
@@ -120,9 +131,14 @@ class PsyRTSGame(Model):
         locationsPredators = [(10, 10), (13, 10), (7, 10), ( 8, 10), (12, 10) ]
 
         self.datacollector = DataCollector(
-            model_reporters={"Exploration": exploration ,
+            model_reporters={
+                "Experiment_Synth": track_experiment,
+                "Conditions": track_params,
+                "Step": track_run,
+                "Exploration": exploration ,
                              "Exploitation": exploitation,
-                              "ResourcesRatio": resourcesRatio})   #reporto a datos
+                              "ResourcesRatio": resourcesRatio
+                             })   #reporto a datos
 
         centralplaceparticipant = CentralPlace(self.next_id(), locationCPParticipant, self, True)
         self.grid.place_agent(centralplaceparticipant, locationCPParticipant)
@@ -181,41 +197,26 @@ class PsyRTSGame(Model):
         self.noise = self.noise + ((.02) * self.schedule.get_breed_count(Predator))
 
     def step(self):
-        self.schedule.step()
 
+        self.datacollector.collect(self)
+        self.schedule.step()
         self.updateNoise()
         # collect data
-        self.datacollector.collect(self)
+
         participantsAlive = self.schedule.get_breed_count(Participant)
         if participantsAlive <=0:
             print("Stop Participants dead")
             self.running = False
-
-        # pellets = self.schedule.get_breed_count(Resources)
-        # if pellets <=0:
-        #     print("No more resources")
-        #     self.running = False
-
-
 
         if self.resourcesCompetitors +self.resourcesParticipants == self.resources:
             print("Stop No More Resources")
             self.running = False
 
         if self.schedule.steps>150:
+            print("toomany steps")
             self.running = False
-        # if self.verbose:
-        #     print([self.schedule.time,
-        #            self.schedule.get_breed_count(Predator),
-        #            self.schedule.get_breed_count(Competitor)])
 
-    def run_model(self, step_count=300):
+    def run_model(self, step_count=150):
         for i in range(step_count):
             self.step()
 
-        # if self.verbose:
-        #     print('')
-        #     print('Resources by Participant: ',   self.schedule.get_breed_count(Participant))
-        #     print('Resources by Competitors: ',   self.schedule.get_breed_count(Competitor))
-        #     print('Explorers Alive: ', self.schedule.get_breed_count(Participant))
-        #     print('Competitors Alive: ', self.schedule.get_breed_count(Competitor))
