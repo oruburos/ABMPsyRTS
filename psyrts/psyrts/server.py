@@ -3,9 +3,9 @@ from mesa.visualization.modules import CanvasGrid, ChartModule
 from mesa.visualization.UserParam import UserSettableParameter
 
 from mesa.visualization.modules import TextElement
-from psyrts.agents import Predator, Competitor, Participant, Resources, CentralPlace
-from psyrts.model import PsyRTSGame, resources_competitors, resources_participants
-
+from psyrts.agents import Predator, Competitor, Participant, Resources, CentralPlace, BreadCrumb
+from psyrts.model import PsyRTSGame, resources_competitors, resources_participants , exploration
+from mesa.batchrunner import BatchRunner
 
 def psyrtsPortrayal(agent):
     if agent is None:
@@ -46,6 +46,16 @@ def psyrtsPortrayal(agent):
         portrayal["Layer"] = 0
         portrayal["r"] = 1.8
 
+    elif type(agent) is BreadCrumb:
+        if agent.visited:
+            portrayal["Color"] = ["#0cccc0"]
+        else:
+            portrayal["Color"] = ["#EEEEEE"]
+        portrayal["Shape"] = "circle"
+        portrayal["Filled"] = "true"
+        portrayal["Layer"] = 0
+        portrayal["r"] = .3
+
     else:
         portrayal["Color"] = ["#AAAADD"]
 
@@ -53,7 +63,7 @@ def psyrtsPortrayal(agent):
 
 
 canvas_element = CanvasGrid(psyrtsPortrayal, 20, 20, 500, 500)
-chart_element = ChartModule([                           {"Label": "Resources Competitor", "Color": "#00AA00"}                ]         )
+chart_element = ChartModule([                           {"Label": "Exploration", "Color": "#00AA00"}    , {"Label": "Exploitation", "Color": "#0041FF"}             ]         )
 
 
 
@@ -62,18 +72,39 @@ class MyTextElement(TextElement):
     def render(self, model):
 
         totalResources = str(model.resources)
+       # exploration = str(exploration(model))
         resourcesParticipant = str(resources_participants(model))
         resourcesCompetitor = str(resources_competitors(model))
 
         return "Total Resources: {}<br> Resources Participant:{} <br> Resources Competitor: {}".format( totalResources , resourcesParticipant , resourcesCompetitor)
 
 model_params = {
-                "visibility": UserSettableParameter('checkbox', 'Total Visibility', True),
-                "initial_explorers": UserSettableParameter('slider', 'Number Explorers ' , 1, 1, 5),
+                "visibility": UserSettableParameter('checkbox', 'Total Visibility', False),
+                "initial_explorers": UserSettableParameter('slider', 'Number Explorers ' , 5, 1, 5),
                 "initial_competitors": UserSettableParameter('slider', 'Number Competitors ', 0, 0, 5),
-                "initial_predators": UserSettableParameter('slider', 'Number Predators ', 0, 0, 5),
+                "initial_predators": UserSettableParameter('slider', 'Number Predators ', 3, 0, 5),
 
                 }
 
 server = ModularServer(PsyRTSGame, [canvas_element, MyTextElement() , chart_element], "PsyRTS Module", model_params)
 server.port = 8521
+
+# model_params = {
+#                 'visibility':False,
+#                 "initial_explorers":  5,
+#                 "initial_competitors":  5
+#                 }
+#
+# var_model_params = {
+#                 "initial_predators": range(1, 5)
+#                 }
+#
+#
+# batch_run = BatchRunner (PsyRTSGame, fixed_parameters=model_params, variable_parameters= var_model_params, iterations=1, max_steps=10 )
+# batch_run.run_all()
+#
+# models = server.model
+# gini = models.datacollector.get_model_vars_dataframe()
+#
+# print(gini.describe())
+# gini.plot()

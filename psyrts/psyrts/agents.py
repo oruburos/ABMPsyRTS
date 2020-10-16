@@ -35,7 +35,6 @@ class Participant(RandomWalker):
         else:
             next_moves = self.model.grid.get_neighborhood(self.pos, self.moore, True, 1)
 
-        print("celdas que vi " + str(len(next_moves)))
         for cells in next_moves:
 
             this_cell = self.model.grid.get_cell_list_contents(cells)
@@ -57,50 +56,78 @@ class Participant(RandomWalker):
         '''
         enemy = self.seePredator()
         if enemy:
-            print("Participant move away from enemy")
-
+            print("Move away from predator")
             self.move_away(enemy)
-        if not self.carrying:
 
-            seeResources = self.seeResources()
-            if seeResources:
-                self.move_towards(seeResources)
-                # If there are resources, forage
-                this_cell = self.model.grid.get_cell_list_contents([self.pos])
+        else:
+            if not self.carrying:
 
-                for obj in this_cell:
-                    if isinstance(obj, Resources):
-                        resourcesPellet = obj
-                        resourcesP = resourcesPellet.resources
-                        if resourcesP > 3:
-                            resourcesPellet.resources = resourcesPellet.resources - 3
-                            self.resources = 3
-                        else:
-                            self.resources = resourcesP
-                            resourcesPellet.resources = 0
-                        self.carrying = True
+                seeResources = self.seeResources()
+                if seeResources:
+                    noise = randrange(1, 3)
+                    print("Noise")
+                    if noise == 1:
+                        print("noise")
+                        self.random_move()
+                    else:
+                        self.move_towards(seeResources)
+                    # If there are resources, forage
+                    this_cell = self.model.grid.get_cell_list_contents([self.pos])
+
+                    for obj in this_cell:
+                        if isinstance(obj, Resources):
+                            resourcesPellet = obj
+                            resourcesP = resourcesPellet.resources
+                            if resourcesP > 3:
+                                resourcesPellet.resources = resourcesPellet.resources - 3
+                                self.resources = 3
+                            else:
+                                self.resources = resourcesP
+                                resourcesPellet.resources = 0
+                            self.carrying = True
+                else:
+
+                    # noise = randrange(1, 2)
+                    # print("Noise")
+                    # if noise == 1:
+                    #     print("noise")
+                    #     self.random_move()
+                    # else:
+                    self.move_towards(self.futurepos)
+
+                    if self.pos == self.futurepos:
+                        self.goal()
             else:
 
-                self.move_towards(self.futurepos)
-                if self.pos == self.futurepos:
-                    self.goal()
-        else:
+                #  print("go to central place")
 
-            #  print("go to central place")
-            self.move_towards(self.cp.pos)
+                noise = randrange(1, 4)
 
-            print("Participant move to central place " + str(self.cp.pos))
-            this_cell = self.model.grid.get_cell_list_contents([self.pos])
-            for obj in this_cell:
-                if isinstance(obj, CentralPlace):
-                    centralPlaceMine = obj
-                    if centralPlaceMine.fromParticipant:
-                        if centralPlaceMine == self.cp:
-                            centralPlaceMine.resources = centralPlaceMine.resources + self.resources
-                            self.resources = 0
-                            self.carrying = False
-                            self.model.resourcesParticipants = centralPlaceMine.resources
-                            print(" Actualizando resources participant " + str(self.model.resourcesParticipants))
+                if noise == 1:
+                    self.random_move()
+                else:
+                    self.move_towards(self.cp.pos)
+
+
+
+               # print("Participant move to central place " + str(self.cp.pos))
+                this_cell = self.model.grid.get_cell_list_contents([self.pos])
+                for obj in this_cell:
+                    if isinstance(obj, CentralPlace):
+                        centralPlaceMine = obj
+                        if centralPlaceMine.fromParticipant:
+                            if centralPlaceMine == self.cp:
+                                centralPlaceMine.resources = centralPlaceMine.resources + self.resources
+                                self.resources = 0
+                                self.carrying = False
+                                self.model.resourcesParticipants = centralPlaceMine.resources
+                               # print(" Actualizando resources participant " + str(self.model.resourcesParticipants))
+
+        this_cell = self.model.grid.get_cell_list_contents([self.pos])
+        for obj in this_cell:
+            if isinstance(obj, BreadCrumb):
+                obj.visited =True
+                return
 
 
 
@@ -154,9 +181,15 @@ class Competitor(RandomWalker):
         enemy = self.seePredator()
         if enemy:
             self.move_away(enemy)
+
         if not self.carrying:
             seeResources = self.seeResources()
             if seeResources:
+                noise = randrange(1, 2)
+                print("Noise")
+                if noise == 1:
+                    print("noise")
+                    self.random_move()
                 self.move_towards(seeResources)
                 # If there are resources, forage
                 this_cell = self.model.grid.get_cell_list_contents([self.pos])
@@ -173,7 +206,13 @@ class Competitor(RandomWalker):
                             resourcesPellet.resources = 0
                         self.carrying = True
             else:
-                self.move_towards(self.futurepos)
+                noise = randrange(1, 2)
+                print("Noise")
+                if noise == 1 :
+                    print("noise")
+                    self.random_move()
+                else:
+                    self.move_towards(self.futurepos)
                 if self.pos == self.futurepos:
                     self.goal()
         else:
@@ -191,10 +230,7 @@ class Competitor(RandomWalker):
                             self.resources= 0
                             self.carrying =False
                             self.model.resourcesCompetitors = centralPlaceMine.resources
-                            print(" Actualizando resources competitor " + str(self.model.resourcesCompetitors))
-
-
-
+                           # print(" Actualizando resources competitor " + str(self.model.resourcesCompetitors))
 
 
 class Predator(RandomWalker):
@@ -203,17 +239,7 @@ class Predator(RandomWalker):
     '''
     def __init__(self, unique_id, pos, model, moore):
         super().__init__(unique_id, pos, model, moore=moore)
-
         self.futurepos = (0, 0)
-        self.goal()
-
-
-    def goal(self):
-        x = randrange(0, 19)
-        y = randrange(0, 19)
-        self.futurepos = (x, y)
-
-
 
 
     def seePrey(self):
@@ -233,17 +259,13 @@ class Predator(RandomWalker):
         posPrey = self.seePrey()
 
         if posPrey:
-            #self.futurepos = posPrey
-            self.move_towards(posPrey)
 
-            kind = randrange(1,4)
+            #self.move_towards(posPrey)
+            kind = randrange(1,3)
 
-            if kind >3:
-                print("double")
+            if kind >1:
                 self.move_towards(posPrey)
-        else:
-            kind= randrange(1, 10)
-            if kind == 1  :
+            else:
                 self.random_move()
         x, y = self.pos
         this_cell = self.model.grid.get_cell_list_contents([self.pos])
@@ -251,8 +273,11 @@ class Predator(RandomWalker):
 
         if len(sheep) > 0:
             sheep_to_eat = self.random.choice(sheep)
-            self.model.grid._remove_agent(self.pos, sheep_to_eat)
-            self.model.schedule.remove(sheep_to_eat)
+            kill = randrange(1, 5)
+
+            if kill == 1 :
+                self.model.grid._remove_agent(self.pos, sheep_to_eat)
+                self.model.schedule.remove(sheep_to_eat)
 
 
 class Resources(Agent):
@@ -290,3 +315,14 @@ class CentralPlace(Agent):
 
 
 
+class BreadCrumb(Agent):
+
+    def __init__(self, unique_id, pos, model, fromParticipant=True):
+        '''
+        Creates a new patch of grass
+        Args:
+            grown: (boolean) Whether the patch of grass is fully grown or not
+            countdown: Time for the patch of grass to be fully grown again
+        '''
+        self.visited = False
+        super().__init__(unique_id, model)

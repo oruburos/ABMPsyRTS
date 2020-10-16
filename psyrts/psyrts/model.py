@@ -4,8 +4,28 @@ from mesa.space import MultiGrid
 from mesa.datacollection import DataCollector
 from random import randrange, uniform
 
-from psyrts.agents import Competitor, Predator, Participant, Resources, CentralPlace
+from psyrts.agents import Competitor, Predator, Participant, Resources, CentralPlace, BreadCrumb
 from psyrts.schedule import RandomActivationByBreed
+
+
+def exploration(model):
+    return number_visited( model) /324
+
+def exploitation(model):
+    return randrange(1, 10)
+
+
+def get_all_cell_contents(grid):
+    return list(grid.iter_cell_list_contents(grid.G))
+
+
+def iter_cell_list_contents( grid, cell_list):
+        list_of_lists = [grid.G.node[node_id]['agent'] for node_id in cell_list if not grid.is_cell_empty(node_id)]
+        return [item for sublist in list_of_lists for item in sublist]
+
+def number_visited(model):
+    return sum([1 for a in get_all_cell_contents(model.grid) if a.visited is True])
+
 
 
 def resources_competitors(model):
@@ -19,13 +39,8 @@ class PsyRTSGame(Model):
 
     height = 20
     width = 20
-    initial_sheep = 3
-    initial_wolves = 1
-    initial_participants = 1
-    visibility = False
+
     verbose = False  # Print-monitoring
-
-
 
 
     description = 'A model for simulating participants running the different experiments.'
@@ -79,6 +94,9 @@ class PsyRTSGame(Model):
              #  "Res Participant":   resources_participants
             })
 
+        self.datacollector = DataCollector(
+            model_reporters={"Exploration": exploration , "Exploitation": exploitation})
+
         centralplaceparticipant = CentralPlace(self.next_id(), locationCPParticipant, self, True)
         self.grid.place_agent(centralplaceparticipant, locationCPParticipant)
         self.schedule.add(centralplaceparticipant)
@@ -115,6 +133,11 @@ class PsyRTSGame(Model):
              self.grid.place_agent(patch, pa)
              self.schedule.add(patch)
 
+        for x in range(0,20):
+            for y in range(0, 20):
+                breadcrumb = BreadCrumb(self.next_id(), (x,y), self)
+                self.grid.place_agent(breadcrumb, (x,y))
+                self.schedule.add(breadcrumb)
 
         self.running = True
         self.datacollector.collect(self)
@@ -140,7 +163,7 @@ class PsyRTSGame(Model):
             print("Stop No More Resources")
             self.running = False
 
-        if self.schedule.steps>100:
+        if self.schedule.steps>150:
             self.running = False
         # if self.verbose:
         #     print([self.schedule.time,
