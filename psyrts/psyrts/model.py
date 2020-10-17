@@ -15,15 +15,27 @@ def resourcesRatio(model):
         return  model.resourcesParticipants / model.resources
 
 def exploration(model):
-    return   (number_visited( model, True) )/328
 
+    propEx=0
+    if model.stepsExploiting + model.stepsExploring ==0:
+        return 0
+    else:
+        propEX =( model.stepsExploring)/(model.stepsExploiting + model.stepsExploring)
 
+        return   (number_visited( model, True) )/328 * propEX
 
 
 
 def exploitation(model):
+   # return   ((number_visited( model, False) )/72) * resourcesRatio(model)
+    if model.stepsExploiting + model.stepsExploring ==0:
+        return 0
+    else:
+        propEX =( model.stepsExploiting)/(model.stepsExploiting + model.stepsExploring)
 
-    return   ((number_visited( model, False) )/72) * resourcesRatio(model)
+        #return ((number_visited(model, False)) / 72) * resourcesRatio(model) * propEX
+
+        return  resourcesRatio(model) * propEX
 
 
 def number_visited(model ,mode_exploration=True):
@@ -64,6 +76,12 @@ def track_run(model):
 
 def track_experiment(model):
     return model.uid
+def proportionEE(model):
+
+    print( "steps en exploracion " + str( model.stepsExploring))
+    print("steps en explotacion " + str(model.stepsExploiting))
+    prope = model.stepsExploiting + model.stepsExploring
+    return prope
 
 
 
@@ -108,6 +126,10 @@ class PsyRTSGame(Model):
         self.resourcesParticipants =0
         self.resourcesCompetitors = 0
 
+        self.visitedCells = 0
+        self.stepsExploring = 0
+        self.stepsExploiting = 0
+
 
         self.TotalCells = next_moves = self.grid.get_neighborhood( (10,10), True, True, 11)
         locationsResources = [(4,3) , (16,3), (3,10) , (10,10),(17,10) , (16,17),(4,17)  ]
@@ -126,8 +148,8 @@ class PsyRTSGame(Model):
 
         self.locationsExploration =  list(set(self.TotalCells) - set(self.locationsExploitation))
         #print("size grid explore " + str(len(self.locationsExploration)))
-        locationsParticipants = [(10, 15), (13, 15), (7, 15), ( 8, 15), (12, 15)  ]
-        locationsCompetitors = [(10, 5), (13, 5), (7, 5), ( 8, 5), (12, 5) ]
+        locationsParticipants = [(10, 16), (13, 15), (7, 15), ( 8, 15), (12, 15)  ]
+        locationsCompetitors = [(10, 4), (13, 5), (7, 5), ( 8, 5), (12, 5) ]
         locationsPredators = [(10, 10), (13, 10), (7, 10), ( 8, 10), (12, 10) ]
 
         self.datacollector = DataCollector(
@@ -136,8 +158,9 @@ class PsyRTSGame(Model):
                 "Conditions": track_params,
                 "Step": track_run,
                 "Exploration": exploration ,
-                             "Exploitation": exploitation,
-                              "ResourcesRatio": resourcesRatio
+                "Exploitation": exploitation,
+                "ResourcesRatio": resourcesRatio,
+                "ProportionEE": proportionEE
                              })   #reporto a datos
 
         centralplaceparticipant = CentralPlace(self.next_id(), locationCPParticipant, self, True)
@@ -188,13 +211,24 @@ class PsyRTSGame(Model):
 
     def updateNoise(self):
 
-        if self.visibility:
-            self.noise = 0.4
-        else:
-            self.noise = 0.5
+        # information que gana por conocer el ambiente
+        participantExploration = (number_visited(self, True) +number_visited(self, False))/400
 
+        #friction por manejar mas jugadores
+
+        atencionmultitasking = 1 + (.05*self.schedule.get_breed_count(Participant) )
+
+        #print("How confident I am in the nevironment " + str(participantExploration))
+        if self.visibility:
+            #self.noise = 0.35 * (1-participantExploration) muy bien
+            self.noise = .4 * (1-participantExploration)
+        else:
+            self.noise = 0.55 * (1-participantExploration)
+
+        self.noise = self.noise * (atencionmultitasking)
+        print( "noise0 ", self.noise)
         self.noise = self.noise + (( .03)*self.schedule.get_breed_count(Competitor))
-        self.noise = self.noise + ((.02) * self.schedule.get_breed_count(Predator))
+        self.noise = self.noise + ((.03) * self.schedule.get_breed_count(Predator))
 
     def step(self):
 

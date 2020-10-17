@@ -12,7 +12,9 @@ mysqlServer ='mysql+pymysql://root:@localhost:3308/'
 bdFinalData = "FinalDataPhD"
 
 engine = create_engine(mysqlServer+bdFinalData)
-df = pd.read_csv("PsyRTSModelBorrar.csv")
+#df = pd.read_csv("PsyRTSModelBorrar.csv")
+df = pd.read_csv("PsyRTSModelOptimo.csv")
+
 pd.set_option("display.max_colwidth", None)
 #df.to_sql('prolificE{}'.format(experiment),con= engine ,if_exists ='append' , index= False)
 
@@ -27,21 +29,18 @@ for row in df2.itertuples():
 
 print(df.shape)
 
-
-
 def checkcondition( row ):
 
     condici = row['Conditions']
     condiciones = eval(condici)
-    print(condiciones)
+
     experiment = -1
     condition = -1
-    print(condiciones[0])
     competitors = int(condiciones[0])
     explorers = int(condiciones[1])
     predators  = int(condiciones[2])
     visibilidad = bool(condiciones[3])
-    print(visibilidad)
+
 
     if visibilidad:
         if predators>0 or competitors > 0 :
@@ -91,8 +90,8 @@ def checkcondition( row ):
 
         elif predators == 3 and competitors == 5:
             if explorers == 5:
-                experiment = 4
-                condition = 4
+                experiment = 1
+                condition = 5
             if explorers == 3:
                 experiment = 4
                 condition = 2
@@ -101,12 +100,28 @@ def checkcondition( row ):
     return    pd.Series( [experiment , condition])
 
 
+def balanceperformance(row):
+    exploration = float (row['Exploration'])
+    exploitation = float (row['Exploitation'])
+    balance =  (exploration- exploitation)/(exploration + exploitation)
+    performance = exploration+ exploitation
+
+    return pd.Series([balance, performance])
+
+
+
 
 
 df[['experiment','condition_exp'] ] = df.apply(checkcondition, axis=1)
 
 
+print(df.shape)
+indexNames = df[(df['condition_exp'] == -1 )].index
+df.drop(indexNames, inplace=True)
 
+df[['balance_ee','performance'] ] = df.apply(balanceperformance, axis=1)
+
+print(df.shape)
 #df.to_csv("Limpio.csv")
 
 

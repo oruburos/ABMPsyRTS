@@ -24,8 +24,21 @@ class Participant(RandomWalker):
 
 
     def goal(self):
-        x = randrange(0, 19)
-        y = randrange(0, 19)
+
+        x = randrange(3, 18)  # tecleo cerca, no lejos
+        y = randrange(3, 18)
+        # x = randrange(-6, 6) #tecleo cerca, no lejos
+        # y = randrange(-6, 6)
+        #
+        # newpos = (self.pos[0] + x , self.pos[1] +y )
+        #
+        # if self.model.grid.out_of_bounds( newpos):
+        #     x = randrange(3, 18)  # tecleo cerca, no lejos
+        #     y = randrange(3, 18)
+        #     self.futurepos = (x, y)
+        # else:
+        #     self.futurepos = (x, y)
+
         self.futurepos = (x, y)
 
     def seePredator(self):
@@ -35,20 +48,25 @@ class Participant(RandomWalker):
     def vision(self, type):
 
 
-        next_moves=[]
-        if self.model.visibility:
-            next_moves = self.model.grid.get_neighborhood(self.pos, self.moore, True,3 )
+        stop = randrange(1, 10)
+        if stop > 2:
 
+            next_moves=[]
+            if self.model.visibility:
+                next_moves = self.model.grid.get_neighborhood(self.pos, self.moore, True,2 )#2 ok
+
+            else:
+                next_moves = self.model.grid.get_neighborhood(self.pos, self.moore, True, 1) #1ok
+
+            for cells in next_moves:
+
+                this_cell = self.model.grid.get_cell_list_contents(cells)
+                for obj in this_cell:
+                    if isinstance(obj, type):
+                        return obj.pos
+            return None
         else:
-            next_moves = self.model.grid.get_neighborhood(self.pos, self.moore, True, 1)
-
-        for cells in next_moves:
-
-            this_cell = self.model.grid.get_cell_list_contents(cells)
-            for obj in this_cell:
-                if isinstance(obj, type):
-                    return obj.pos
-        return None
+            return None
 
     def seeResources(self):
        return self.vision(Resources)
@@ -62,13 +80,14 @@ class Participant(RandomWalker):
         if self.predatorPerceived:
             self.threshold = self.threshold +.2
         if self.competitorPerceived:
-            self.threshold =  self.threshold -.1
+            self.threshold =  self.threshold +.1
         self. threshold =  self.threshold +self.model.noise
 
     def step(self):
         '''
         A model step. Move, then forage.
         '''
+
 
         self.updateModel()
 
@@ -104,14 +123,12 @@ class Participant(RandomWalker):
                                 resourcesPellet.resources = 0
                             self.carrying = True
                 else:
-
-                    # noise = randrange(1, 2)
-                    # print("Noise")
-                    # if noise == 1:
-                    #     print("noise")
-                    #     self.random_move()
-                    # else:
-                    self.move_towards(self.futurepos)
+                    noise = self.random.random()
+                    if noise < self.threshold:
+                        # print("uncertain")
+                        self.random_move()
+                    else:
+                        self.move_towards(self.futurepos)
 
                     if self.pos == self.futurepos:
                         self.goal()
@@ -125,8 +142,6 @@ class Participant(RandomWalker):
                     self.random_move()
                 else:
                     self.move_towards(self.cp.pos)
-
-
 
                # print("Participant move to central place " + str(self.cp.pos))
                 this_cell = self.model.grid.get_cell_list_contents([self.pos])
@@ -144,7 +159,15 @@ class Participant(RandomWalker):
         this_cell = self.model.grid.get_cell_list_contents([self.pos])
         for obj in this_cell:
             if isinstance(obj, BreadCrumb):
-                obj.visited =True
+                if self.pos in self.model.locationsExploitation:
+
+                    self.model.stepsExploiting = self.model.stepsExploiting + 1
+                else:
+                    #self.model.stepsExploring = self.model.stepsExploring + 1
+                    if not obj.visited:
+                        self.model.stepsExploring = self.model.stepsExploring + 1
+                        obj.visited = True
+
                 return
 
 
@@ -174,11 +197,7 @@ class Competitor(RandomWalker):
 
     def vision(self, type):
         next_moves = []
-        if self.model.visibility:
-            next_moves = self.model.grid.get_neighborhood(self.pos, self.moore, True, 2)
-
-        else:
-            next_moves = self.model.grid.get_neighborhood(self.pos, self.moore, True, 1)
+        next_moves = self.model.grid.get_neighborhood(self.pos, self.moore, True, 3)
 
         for cells in next_moves:
 
@@ -203,9 +222,9 @@ class Competitor(RandomWalker):
         if not self.carrying:
             seeResources = self.seeResources()
             if seeResources:
-                noise = randrange(1, 2)
+                noise = randrange(1, 3)
                 #print("Noise")
-                if noise == 1:
+                if noise <3 :
                    # print("noise")
                     self.random_move()
                 self.move_towards(seeResources)

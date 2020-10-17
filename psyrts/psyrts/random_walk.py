@@ -65,8 +65,16 @@ class RandomWalker(Agent):
         newy = 0
         direction =cosa
 
+
+
+
+
+
         if posactual[0] == direction[0]: #same x
+
             newx = posactual[0]
+
+
             if posactual[1] < direction[1]:
                 newy = posactual[1]+1
             elif posactual[1] > direction[1]:
@@ -79,7 +87,7 @@ class RandomWalker(Agent):
             if posactual[1] < direction[1]:
                 newy = posactual[1] + 1
 
-            if posactual[1] > direction[1]:
+            elif posactual[1] > direction[1]:
                 newy = posactual[1] - 1
 
             else:# =
@@ -89,7 +97,7 @@ class RandomWalker(Agent):
             newx = posactual[0] - 1
             if posactual[1] < direction[1]:
                 newy = posactual[1] + 1
-            if posactual[1] > direction[1]:
+            elif posactual[1] > direction[1]:
                 newy = posactual[1] - 1
             else:
                 newy = posactual[1]
