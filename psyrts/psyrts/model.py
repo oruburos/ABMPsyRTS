@@ -155,8 +155,8 @@ class PsyRTSGame(Model):
 
     def __init__(self, height=20, width=20, visibility = False ,initial_competitors=0,
                  initial_explorers=1, initial_predators=0  ,
-                 impactTotalVisibility =.3 , impactPartialVisibility = .35, impactParticipants = .05,
-                 impactCompetitors= .02, impactPredators= .02 ):
+                 impactTotalVisibility =.3 , impactPartialVisibility = .35, impactParticipants = .0,
+                 impactCompetitors= .0, impactPredators= .0 ):
         '''
         Create a new PsyRTS  model with the given parameters.
 

@@ -15,9 +15,6 @@ import matplotlib.pyplot as plt
 from sqlalchemy import create_engine
 import json
 
-
-
-
 def balanceperformance(row):
     exploration = float (row['Exploration'])
     exploitation = float (row['Exploitation'])
@@ -25,8 +22,6 @@ def balanceperformance(row):
     performance = exploration+ exploitation
 
     return pd.Series([balance, performance])
-
-
 
 def checkcondition( row ):
 
@@ -99,6 +94,12 @@ def checkcondition( row ):
 
     return    pd.Series( [experiment , condition])
 
+
+
+
+
+
+
 #
 #
 # model_paramsT = {
@@ -123,21 +124,66 @@ def checkcondition( row ):
 #
 
 
-model_paramsT = {
+model_paramsTEx3cond1 = {
                  'visibility': [True],
+                "initial_explorers": [1],
+                "impactParticipants": [.20],
+
 }
+
+
+model_paramsTEx3cond2 = {
+                 'visibility': [False],
+                "initial_explorers": [1],
+                "impactParticipants": [.03],
+}
+
+
+
+model_paramsTEx3cond3 = {
+                 'visibility': [True],
+                "initial_explorers": [3],
+                "impactParticipants": [.27],
+
+}
+
+
+model_paramsTEx3cond4 = {
+                 'visibility': [False],
+                "initial_explorers": [3],
+                "impactParticipants": [.05],
+}
+
+
+
+
+model_paramsTEx3cond5 = {
+                 'visibility': [True],
+                "initial_explorers": [5],
+                "impactParticipants": [.17],
+
+}
+
+
+model_paramsTEx3cond6 = {
+                 'visibility': [False],
+                "initial_explorers": [5],
+                "impactParticipants": [.05],
+}
+
+
+
+
 model_paramsFixed = {
 
-        "initial_explorers": 1,
-         "impactParticipants": .20,
         "impactPartialVisibility": .25,
         "impactTotalVisibility": .1,
 
  }
 
-
+nombreCSV = "model_paramsTEx3cond6"+".csv"
 br = BatchRunner(PsyRTSGame,
-                 variable_parameters=model_paramsT,
+                 variable_parameters=model_paramsTEx3cond6,
                  fixed_parameters= model_paramsFixed,
                  iterations= 50,
                  max_steps=150,
@@ -154,53 +200,22 @@ if __name__ == '__main__':
             br_step_data = br_step_data.append(i_run_data, ignore_index=True)
 
     concat = br_step_data
-
-
-
-#df = pd.read_csv("PsyRTSTest1.csv")
     df = concat
-
-    print(df.shape)
     df2 = df.groupby(['Experiment_Synth'])['Step'].max().reset_index()
 
     for row in df2.itertuples():
-        #print(row.Experiment_Synth)
-        #print(row.Step)
         indexNames = df[ (df['Step'] < row.Step) & (df['Experiment_Synth'] == row.Experiment_Synth) ].index
         df.drop(indexNames , inplace=True)
-
-    print(df.shape)
-
 
 
     df[['experiment','condition_exp'] ] = df.apply(checkcondition, axis=1)
 
-
-    print(df.shape)
     indexNames = df[(df['condition_exp'] == -1 )].index
     df.drop(indexNames, inplace=True)
 
     df[['balance_ee','performance'] ] = df.apply(balanceperformance, axis=1)
 
-    print(df.shape)
-    print(df.columns)
-
     df = df[['Experiment_Synth', 'experiment', 'condition_exp',  'Conditions',  'ResourcesRatio',  'Exploitation'  ,'Exploration',  'balance_ee', 'performance' ] ]
-
-    #print ( concat.describe())
-    df.to_csv("PsyRTSEx3_1_TotalvsPartial.csv")
-
-    #
-    # df2 = df [[ 'condition_exp',  'ResourcesRatio',  'Exploration', 'Exploitation', 'balance_ee', 'performance']]
-    #
-    #
-    #
-    # df2 = df.groupby(['condition_exp'])['ResourcesRatio', 'balance_ee','performance'].reset_index()
-    #
-    #
-    # print ( df2.describe())
-    # from tabulate import tabulate
-    # print(tabulate(df2))
-
+    df.to_csv(nombreCSV)
 
 
