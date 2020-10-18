@@ -17,22 +17,24 @@ class Participant(RandomWalker):
         self.carrying = False
         self.cp = cp
         self.futurepos = (0, 0)
-        self.goal()
-
+        self.memory = []
         self.predatorPerceived = False
         self.competitorPerceived = False
         self.certainty = 0.0
-
-
+        self.goal()
 
     def goal(self):
+        proposedPos = self.randomPosScreen()
+        if not self.model.visibility:
+            while proposedPos in self.memory:
+                proposedPos = self.randomPosScreen()
 
-        self.futurepos = self.randomPosScreen()
+        self.futurepos = proposedPos
 
 
     def influencePredator(self):
 
-        mu, sigma = self.model.impactPredators, 0.02  # mean and standard deviation
+        mu, sigma = self.model.impactPredators, 0.001  # mean and standard deviation
         s = np.random.normal(mu, sigma)
 
         return s
@@ -40,7 +42,7 @@ class Participant(RandomWalker):
 
     def uncertaintyInAgent(self):
 
-        mu, sigma = 0.15, 0.02  # mean and standard deviation
+        mu, sigma = 0.1, 0.02  # mean and standard deviation
         noise = np.random.normal(mu, sigma)
         s = noise
         if self.predatorPerceived:
@@ -52,7 +54,7 @@ class Participant(RandomWalker):
 
     def influenceCompetitor(self):
 
-        mu, sigma = self.model.impactPredators, 0.02  # mean and standard deviation
+        mu, sigma = self.model.impactPredators, 0.001  # mean and standard deviation
         s = np.random.normal(mu, sigma)
         return s
 
@@ -60,27 +62,35 @@ class Participant(RandomWalker):
 
         self.certainty = 1.0-self.uncertaintyInAgent() - self.model.uncertainty
 
-        # if self.certainty < 0 or self.certainty >1:
-        #     print(" ERROR ********************************************agent ")
 
-     #   print(" Certainty Control Agent" + str(self.certainty))
+      #  print(" Certainty Control Agent" + str(self.certainty))
 
     def seePredator(self):
-        return self.vision(Predator)
+
+                next_moves  = self.model.grid.get_neighborhood(self.pos, self.moore, True, 1)  # 1ok
+
+                for cells in next_moves:
+
+                    this_cell = self.model.grid.get_cell_list_contents(cells)
+                    for obj in this_cell:
+                        if isinstance(obj, Predator):
+                            return obj.pos
+                return None
+
+
 
 
     def vision(self, type):
-
 
         stop = randrange(1, 8)
         if stop > -1:  #not always participants are doing something
 
             next_moves=[]
             if self.model.visibility:
-                next_moves = self.model.grid.get_neighborhood(self.pos, self.moore, True, 2 )#2 ok
+                next_moves = self.model.grid.get_neighborhood(self.pos, self.moore, True, 3 )#2 ok
 
             else:
-                next_moves = self.model.grid.get_neighborhood(self.pos, self.moore, True, 1) #1ok
+                next_moves = self.model.grid.get_neighborhood(self.pos, self.moore, True, 2) #1ok
 
             for cells in next_moves:
 
@@ -91,6 +101,8 @@ class Participant(RandomWalker):
             return None
         else:
             return None
+
+
 
     def seeResources(self):
        return self.vision(Resources)
@@ -105,42 +117,32 @@ class Participant(RandomWalker):
         '''
 
         #participants not always select an unit, and the more units, the more chances to not play it
-        multitaskingFriction =  (1 - self.model.impactParticipants )**self.model.initial_explorers
+
+        multitaskingFriction = (1 - self.model.impactParticipants ) ** self.model.initial_explorers
 
         useUnit = self.random.random()
 
         if useUnit < multitaskingFriction:
 
             self.updateModel()
-
-
             enemy = self.seePredator()
             if enemy:
-
                 noise = self.random.random()
                 if noise > self.certainty:
-                    self.goal()
                     self.move_towards(self.futurepos)
                 else:
                     self.move_away(enemy)
-
             else:
                 if not self.carrying:
                     seeResources = self.seeResources()
                     if seeResources:
-                        noise = self.random.random()
+
                         self.move_towards(seeResources)
-                        #if noise < self.threshold:
-                        # if noise > self.certainty:
-                        #     self.move_towards(self.futurepos)
-                        #     if self.pos == self.futurepos:
-                        #         self.goal()
-                        # else:
-                        #     self.move_towards(seeResources)
                         # # If there are resources, forage
                         this_cell = self.model.grid.get_cell_list_contents([self.pos])
 
                         for obj in this_cell:
+
                             if isinstance(obj, Resources):
                                 resourcesPellet = obj
                                 resourcesP = resourcesPellet.resources
@@ -151,26 +153,19 @@ class Participant(RandomWalker):
                                     self.resources = resourcesP
                                     resourcesPellet.resources = 0
                                 self.carrying = True
-                    else:##
+                    else:# no resources on sight
+                            noise = self.random.random()
+                            if noise > self.certainty:
+                                self.goal()
 
-                        noise = self.random.random()
-                        if noise > self.certainty:
-                            # print("uncertain")
-                            self.goal()
-                            self.move_towards(self.futurepos)
-                        else:
                             self.move_towards(self.futurepos)
 
-                        if self.pos == self.futurepos:
-                            self.goal()
                 else:
-                    #  print("go to central place")
-                    # noise = self.random.random()
-                    # if noise < self.threshold:
-                    #    # print("uncertain")
-                    #     self.random_move()
-                    # else:
-                    self.move_towards(self.cp.pos)
+                    noise = self.random.random()
+                    if noise < self.certainty:
+                        self.move_towards(self.cp.pos)
+                    else:
+                        self.move_towards(self.futurepos)
 
                    # print("Participant move to central place " + str(self.cp.pos))
                     this_cell = self.model.grid.get_cell_list_contents([self.pos])
@@ -183,19 +178,24 @@ class Participant(RandomWalker):
                                     self.resources = 0
                                     self.carrying = False
                                     self.model.resourcesParticipants = centralPlaceMine.resources
-                                   # print(" Actualizando resources participant " + str(self.model.resourcesParticipants))
+                                    self.goal()
 
             this_cell = self.model.grid.get_cell_list_contents([self.pos])
+
+            self.memory.append(self.pos)
+            if self.pos == self.futurepos:
+                self.goal()
+
             for obj in this_cell:
                 if isinstance(obj, BreadCrumb):
                     if self.pos in self.model.locationsExploitation:
-
                         self.model.stepsExploiting = self.model.stepsExploiting + 1
                     else:
-                        if self.carrying:
-                            self.model.stepsExploiting = self.model.stepsExploiting + 1
-                        else:
-                            self.model.stepsExploring = self.model.stepsExploring + 1
+                        # if self.carrying:
+                        #     self.model.stepsExploiting = self.model.stepsExploiting + 1
+                        # else:
+                        #     self.model.stepsExploring = self.model.stepsExploring + 1
+                        self.model.stepsExploring = self.model.stepsExploring + 1
 
                     if not obj.visited:
                         obj.visited = True
@@ -228,7 +228,7 @@ class Competitor(RandomWalker):
 
     def vision(self, type):
         next_moves = []
-        next_moves = self.model.grid.get_neighborhood(self.pos, self.moore, True, 3)
+        next_moves = self.model.grid.get_neighborhood(self.pos, self.moore, True, 1)
 
         for cells in next_moves:
 
@@ -253,7 +253,7 @@ class Competitor(RandomWalker):
         if not self.carrying:
             seeResources = self.seeResources()
             if seeResources:
-                noise = randrange(1, 3)
+                noise = randrange(1, 5)
 
                 if noise <3 :
                    # print("noise")
@@ -275,9 +275,9 @@ class Competitor(RandomWalker):
                             resourcesPellet.resources = 0
                         self.carrying = True
             else:
-                noise = randrange(1, 2)
+                noise = randrange(1, 4)
                 #print("Noise")
-                if noise == 1 :
+                if noise < 2 :
                    # print("noise")
                     self.random_move()
                 else:
@@ -300,7 +300,7 @@ class Competitor(RandomWalker):
                             self.carrying =False
                             self.model.resourcesCompetitors = centralPlaceMine.resources
                            # print(" Actualizando resources competitor " + str(self.model.resourcesCompetitors))
-
+                            self.goal()
 
 class Predator(RandomWalker):
     '''

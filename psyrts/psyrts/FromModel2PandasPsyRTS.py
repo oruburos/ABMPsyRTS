@@ -99,25 +99,40 @@ def checkcondition( row ):
 
     return    pd.Series( [experiment , condition])
 
+#
+#
+# model_paramsT = {
+#                 'visibility': [True, False],
+#                 "initial_explorers": [1],
+#                 "initial_competitors": [ 0 ],
+#                 "initial_predators": [ 0]
+# }
+
 
 
 model_paramsT = {
                 'visibility': [True, False],
-                "initial_explorers": range(1, 3, 2),
-                "initial_competitors": [ 0 ],
-                "initial_predators": [ 0]
-}
+                "initial_explorers": [1 ,3 , 5],
+               # "initial_competitors": [ 0 ],
+                #"initial_predators": [ 0],
 
-model_paramsP = {
-                'visibility': [ False],
-                "initial_explorers": range(1, 6, 2),
-                "initial_competitors": [ 0, 3 , 5],
-                "initial_predators": [ 0, 3, 5]
-}
+                # "impactPartialVisibility": [.25],
+                 #"impactTotalVisibility": [.1],
+                "impactParticipants": [.1 , .03 , .05 , .16 , .20, .23, .28]
+ }
+
+
+
+model_paramsFixed = {
+                 "impactPartialVisibility": .25,
+                 "impactTotalVisibility": .1,
+                "impactParticipants": .2
+ }
 
 
 br = BatchRunner(PsyRTSGame,
-                 model_paramsT,
+                 variable_parameters=model_paramsT,
+                 fixed_parameters= model_paramsFixed,
                  iterations= 50,
                  max_steps=150,
                  model_reporters={"Data Collector": lambda m: m.datacollector})
@@ -152,8 +167,6 @@ if __name__ == '__main__':
 
 
 
-
-
     df[['experiment','condition_exp'] ] = df.apply(checkcondition, axis=1)
 
 
@@ -166,20 +179,22 @@ if __name__ == '__main__':
     print(df.shape)
     print(df.columns)
 
-    df = df[['Experiment_Synth', 'experiment', 'condition_exp',  'Conditions',  'ResourcesRatio',  'Exploration', 'Exploitation', 'balance_ee', 'performance']]
+    df = df[['Experiment_Synth', 'experiment', 'condition_exp',  'Conditions',  'ResourcesRatio',  'Exploitation'  'Exploration',  'balance_ee', 'performance' ] ]
 
-    print ( concat.describe())
-    df.to_csv("PsyRTSEx1_2_Test1.csv")
+    #print ( concat.describe())
+    df.to_csv("PsyRTSEx1_2_TotalvsPartial.csv")
 
-
-    df2 = df [[ 'condition_exp',  'ResourcesRatio',  'Exploration', 'Exploitation', 'balance_ee', 'performance']]
-
-
-
-    df2 = df.groupby(['condition_exp'])['ResourcesRatio', 'balance_ee','performance']
-    print ( df2.describe())
-    from tabulate import tabulate
-    print(tabulate(df2))
+    #
+    # df2 = df [[ 'condition_exp',  'ResourcesRatio',  'Exploration', 'Exploitation', 'balance_ee', 'performance']]
+    #
+    #
+    #
+    # df2 = df.groupby(['condition_exp'])['ResourcesRatio', 'balance_ee','performance'].reset_index()
+    #
+    #
+    # print ( df2.describe())
+    # from tabulate import tabulate
+    # print(tabulate(df2))
 
 
 

@@ -26,7 +26,8 @@ def exploration(model):
     else:
         propEX =( model.stepsExploring)/(model.stepsExploiting + model.stepsExploring)
 
-        return   (number_visited( model, True) )/328 * propEX
+        #return   (number_visited( model, True) )/328 * propEX
+    return  mapExplored(model) * propEX
 
 
 
@@ -42,6 +43,34 @@ def exploitation(model):
         return  resourcesRatio(model) * propEX
 
 
+# def mapExplored(model):
+#
+#
+#     next_moves = []
+#     next_moves = model.locationsExploration
+#     next_moves = next_moves + model.locationsExploitation
+#     visitadas = 0
+#
+#     celdas = []
+#     for cells in next_moves:
+#         this_cell = model.grid.get_cell_list_contents(cells)
+#         for obj in this_cell:
+#             if isinstance(obj, BreadCrumb):
+#                 if obj.visited:
+#                     potential = model.grid.get_neighborhood(obj.pos, True, True, 1)
+#                     celdas = celdas + potential
+#
+#
+#     for obj2 in celdas:
+#         this_cell = model.grid.get_cell_list_contents(obj2)
+#         for obj3 in this_cell:
+#             if isinstance(obj3, BreadCrumb):
+#                 visitadas = visitadas + 1
+#
+#     print("alcanzables ", visitadas)
+#     return visitadas/400
+#
+#
 
 def mapExplored(model):
     next_moves = []
@@ -49,7 +78,6 @@ def mapExplored(model):
     next_moves = model.locationsExploration
 
     next_moves = next_moves + model.locationsExploitation
-    # print( "size grid " + str(len(next_moves)))
     visitadas = 0
     for cells in next_moves:
         this_cell = model.grid.get_cell_list_contents(cells)
@@ -59,28 +87,31 @@ def mapExplored(model):
                     visitadas = visitadas + 1
 
     return visitadas/400
+#
 
-def number_visited(model ,mode_exploration=True):
-
-    next_moves = []
-    if mode_exploration:
-        next_moves = model.locationsExploration
-    else:
-        next_moves = model.locationsExploitation
-
-    visitadas = 0
-    for cells in next_moves:
-        this_cell = model.grid.get_cell_list_contents(cells)
-        for obj in this_cell:
-            if isinstance(obj, BreadCrumb):
-                if obj.visited:
-                    potential = model.grid.get_neighborhood(obj.pos, True, True, 2)
-                    for obj2 in this_cell:
-                        if isinstance(obj2, BreadCrumb):
-                            if obj2.visited:
-                                visitadas = visitadas + 1
-
-    return visitadas
+#
+# def number_visited(model ,mode_exploration=True):
+#
+#     next_moves = []
+#     if mode_exploration:
+#         next_moves = model.locationsExploration
+#     else:
+#         next_moves = model.locationsExploitation
+#
+#     visitadas = 0
+#     for cells in next_moves:
+#         this_cell = model.grid.get_cell_list_contents(cells)
+#         for obj in this_cell:
+#             if isinstance(obj, BreadCrumb):
+#                 if obj.visited:
+#                     # potential = model.grid.get_neighborhood(obj.pos, True, True, 2)
+#                     # for obj2 in this_cell:
+#                     #     if isinstance(obj2, BreadCrumb):
+#                     #         if obj2.visited:
+#                     visitadas = visitadas + 1
+#
+#     print("number visited ", visitadas)
+#     return visitadas
 
 
 def resources_competitors(model):
@@ -88,7 +119,6 @@ def resources_competitors(model):
 
 def resources_participants(model):
     return model.resourcesParticipants
-
 
 
 def track_params(model):
@@ -123,9 +153,9 @@ class PsyRTSGame(Model):
 
     description = 'A model for simulating participants running the different experiments.'
 
-    def __init__(self, height=20, width=20, visibility = False ,initial_competitors=1,
-                 initial_explorers=1, initial_predators=1  ,
-                 impactTotalVisibility =.9 , impactPartialVisibility = .5, impactParticipants = .05,
+    def __init__(self, height=20, width=20, visibility = False ,initial_competitors=0,
+                 initial_explorers=1, initial_predators=0  ,
+                 impactTotalVisibility =.3 , impactPartialVisibility = .35, impactParticipants = .05,
                  impactCompetitors= .02, impactPredators= .02 ):
         '''
         Create a new PsyRTS  model with the given parameters.
@@ -160,12 +190,22 @@ class PsyRTSGame(Model):
 
 
 #parameters model
-        mu, sigma = impactTotalVisibility, 0.02  # mean and standard deviation
+        mu, sigma = impactTotalVisibility, 0.05  # mean and standard deviation
         tv = np.random.normal(mu, sigma)
+        if  tv < 0:
+            tv = 0
+       # print( "Starting with tv " , tv)
 
 
-        mu, sigma = impactPartialVisibility, 0.02  # mean and standard deviation
+
+
+        mu, sigma = impactPartialVisibility, 0.05  # mean and standard deviation
         pv = np.random.normal(mu, sigma)
+        if  pv < 0:
+            pv = 0
+
+
+        #print("Starting with pv ", pv)
 
         self.impactTotalVisibility = tv
         self.impactPartialVisibility  = pv
@@ -203,7 +243,8 @@ class PsyRTSGame(Model):
                 "Exploitation": exploitation,
                 "ResourcesRatio": resourcesRatio,
                 "ProportionEE": proportionEE,
-                "MapExplored": mapExplored
+                "MapExplored": mapExplored,
+
                              })   #reporto a datos
 
         centralplaceparticipant = CentralPlace(self.next_id(), locationCPParticipant, self, True)
@@ -261,29 +302,24 @@ class PsyRTSGame(Model):
 
         uncertaintyVisibility = 0
 
+
+        # if self.model.visibility :
+        #     multitaskingFriction = (1 - self.model.impactParticipants ) ** self.model.initial_explorers
+        # else:
+
+
         if self.visibility:
             uncertaintyVisibility  =   self.impactTotalVisibility
+            self.uncertainty = uncertaintyVisibility
         else:
             uncertaintyVisibility  =  self.impactPartialVisibility
+            self.uncertainty = uncertaintyVisibility* (1-participantExploration)
 
 
 
-        self.uncertainty = uncertaintyVisibility* (1-participantExploration)
-
-        #gaininginformation = self.impactTotalVisibility * self.impactParticipants * self.schedule.get_breed_count(                Participant)
-
-
-           # gaininginformation = self.impactPartialVisibility * self.impactParticipants * self.schedule.get_breed_count(                Participant)
-
-        # por manejar mas jugadores
-        #atencionmultitasking =  1 -  (self.impactParticipants * self.schedule.get_breed_count(Participant))
-
-        #self.uncertainty = self.uncertainty/atencionmultitasking
-
-        #
-        # if self.uncertainty < 0 or self.uncertainty >1:
-        #     print(" ERROR ********************************************************************** MODEL")
-        # print("explored map {} uncertainty  in the environment {} ".format ( participantExploration, self.uncertainty ))
+        if self.uncertainty <0 :
+            self.uncertainty = 0
+        #print("explored map {} uncertainty  in the environment {} ".format ( participantExploration, self.uncertainty ))
 
 
 
