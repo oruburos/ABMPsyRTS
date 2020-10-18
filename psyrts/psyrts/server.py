@@ -4,7 +4,7 @@ from mesa.visualization.UserParam import UserSettableParameter
 
 from mesa.visualization.modules import TextElement
 from psyrts.agents import Predator, Competitor, Participant, Resources, CentralPlace, BreadCrumb
-from psyrts.model import PsyRTSGame, resources_competitors, resources_participants , exploration, number_visited, exploitation, resourcesRatio, proportionEE
+from psyrts.model import PsyRTSGame, resources_competitors, resources_participants , exploration, number_visited, exploitation, resourcesRatio, proportionEE, mapExplored
 from mesa.batchrunner import BatchRunner
 
 def psyrtsPortrayal(agent):
@@ -63,7 +63,7 @@ def psyrtsPortrayal(agent):
 
 
 canvas_element = CanvasGrid(psyrtsPortrayal, 20, 20, 500, 500)
-chart_element = ChartModule([                           {"Label": "Exploration", "Color": "#00AA00"}    , {"Label": "Exploitation", "Color": "#0041FF"}       , {"Label": "ResourcesRatio", "Color": "#FFAA22"}        ]         )
+chart_element = ChartModule([                           {"Label": "Exploration", "Color": "#00AA00"}    , {"Label": "Exploitation", "Color": "#0041FF"}       , {"Label": "ResourcesRatio", "Color": "#FFAA22"}     , {"Label": "MapExplored", "Color": "#00FFFF"}      ]         )
 
 
 
@@ -83,20 +83,21 @@ class MyTextElement(TextElement):
         actividad = proportionEE(model)
         resourcesCompetitor = str(resources_competitors(model))
         performance = exploitationS +explorationS
+        mapcoverage = mapExplored(model)
 
         #return "Total Resources: {} Resources Part:{}  Resources Co: {}  <br>  Ratio :{:2.3f}   Exploration :{:2.3f} Exploitation:{:2.3f}  Performance {:2.3f} <br>  Proportion :{:2.3f} Balance: {:2.3f}".format( totalResources , resourcesParticipant , resourcesCompetitor, resourceRatio, explorationS, exploitationS,performance, actividad, balance )
-        return "Total Resources: {} Resources Part:{}   Ratio :{:2.3f} <br>  Exploration :{:2.3f} Exploitation:{:2.3f}  Performance {:2.3f} <br> Balance: {:2.3f}".format(
+        return "Total Resources: {} Resources Part:{}   Ratio :{:2.3f} <br>  Exploration :{:2.3f} Exploitation:{:2.3f}  Performance {:2.3f} <br>  Proportion Map Explored :{:2.3f} <br> Balance: {:2.3f} ".format(
             totalResources, resourcesParticipant,  resourceRatio, explorationS, exploitationS,
-            performance,  balance)
+            performance, mapcoverage, balance)
 
 model_params = {
-                "visibility": UserSettableParameter('checkbox', 'Total Visibility', False),
-                "initial_explorers": UserSettableParameter('slider', 'Number Explorers ' , 5, 1, 5),
-                "initial_competitors": UserSettableParameter('slider', 'Number Competitors ', 5, 0, 5),
-                "initial_predators": UserSettableParameter('slider', 'Number Predators ', 3, 0, 5),
+                "visibility": UserSettableParameter('checkbox', 'Total Visibility', True),
+                "initial_explorers": UserSettableParameter('slider', 'Number Explorers ' , 1, 1, 5),
+                "initial_competitors": UserSettableParameter('slider', 'Number Competitors ', 0, 0, 5),
+                "initial_predators": UserSettableParameter('slider', 'Number Predators ', 0, 0, 5),
 
                 "impactTotalVisibility": UserSettableParameter('slider', 'impactTotalVisibility ', 0.25, 0, 1, .05 ),
-                "impactPartialVisibility": UserSettableParameter('slider', 'impactPartialVisibility ', 0.35, 0, 1, .05 ),
+                "impactPartialVisibility": UserSettableParameter('slider', 'impactPartialVisibility ', 0.75, 0, 1, .05 ),
                 "impactParticipants": UserSettableParameter('slider', 'impactParticipants ', 0.05, 0, .05, .01),
                 "impactCompetitors": UserSettableParameter('slider', 'impactCompetitors ', 0.05, 0, .05, .01),
                 "impactPredators": UserSettableParameter('slider', 'impactPredators ', 0.05, 0, .05, .01)

@@ -40,7 +40,7 @@ class Participant(RandomWalker):
 
     def uncertaintyInAgent(self):
 
-        mu, sigma = 0.1, 0.02  # mean and standard deviation
+        mu, sigma = 0.15, 0.02  # mean and standard deviation
         noise = np.random.normal(mu, sigma)
         s = noise
         if self.predatorPerceived:
@@ -60,10 +60,10 @@ class Participant(RandomWalker):
 
         self.certainty = 1.0-self.uncertaintyInAgent() - self.model.uncertainty
 
-        if self.certainty < 0 or self.certainty >1:
-            print(" ERROR ********************************************agent ")
+        # if self.certainty < 0 or self.certainty >1:
+        #     print(" ERROR ********************************************agent ")
 
-        print(" Certainty Control Agent" + str(self.certainty))
+     #   print(" Certainty Control Agent" + str(self.certainty))
 
     def seePredator(self):
         return self.vision(Predator)
@@ -77,10 +77,10 @@ class Participant(RandomWalker):
 
             next_moves=[]
             if self.model.visibility:
-                next_moves = self.model.grid.get_neighborhood(self.pos, self.moore, True, 3 )#2 ok
+                next_moves = self.model.grid.get_neighborhood(self.pos, self.moore, True, 2 )#2 ok
 
             else:
-                next_moves = self.model.grid.get_neighborhood(self.pos, self.moore, True, 2) #1ok
+                next_moves = self.model.grid.get_neighborhood(self.pos, self.moore, True, 1) #1ok
 
             for cells in next_moves:
 
@@ -104,94 +104,102 @@ class Participant(RandomWalker):
         A model step. Move, then forage.
         '''
 
+        #participants not always select an unit, and the more units, the more chances to not play it
+        multitaskingFriction =  (1 - self.model.impactParticipants )**self.model.initial_explorers
 
-        self.updateModel()
+        useUnit = self.random.random()
+
+        if useUnit < multitaskingFriction:
+
+            self.updateModel()
 
 
-        enemy = self.seePredator()
-        if enemy:
+            enemy = self.seePredator()
+            if enemy:
 
-            noise = self.random.random()
-            if noise > self.certainty:
-                self.goal()
-                self.move_towards(self.futurepos)
+                noise = self.random.random()
+                if noise > self.certainty:
+                    self.goal()
+                    self.move_towards(self.futurepos)
+                else:
+                    self.move_away(enemy)
+
             else:
-                self.move_away(enemy)
+                if not self.carrying:
+                    seeResources = self.seeResources()
+                    if seeResources:
+                        noise = self.random.random()
+                        self.move_towards(seeResources)
+                        #if noise < self.threshold:
+                        # if noise > self.certainty:
+                        #     self.move_towards(self.futurepos)
+                        #     if self.pos == self.futurepos:
+                        #         self.goal()
+                        # else:
+                        #     self.move_towards(seeResources)
+                        # # If there are resources, forage
+                        this_cell = self.model.grid.get_cell_list_contents([self.pos])
 
-        else:
-            if not self.carrying:
+                        for obj in this_cell:
+                            if isinstance(obj, Resources):
+                                resourcesPellet = obj
+                                resourcesP = resourcesPellet.resources
+                                if resourcesP > 3:
+                                    resourcesPellet.resources = resourcesPellet.resources - 3
+                                    self.resources = 3
+                                else:
+                                    self.resources = resourcesP
+                                    resourcesPellet.resources = 0
+                                self.carrying = True
+                    else:##
 
-                seeResources = self.seeResources()
-                if seeResources:
-                    noise = self.random.random()
-                    #if noise < self.threshold:
-                    if noise > self.certainty:
-                        self.move_towards(self.futurepos)
+                        noise = self.random.random()
+                        if noise > self.certainty:
+                            # print("uncertain")
+                            self.goal()
+                            self.move_towards(self.futurepos)
+                        else:
+                            self.move_towards(self.futurepos)
+
                         if self.pos == self.futurepos:
                             self.goal()
-                    else:
-                        self.move_towards(seeResources)
-                    # If there are resources, forage
-                    this_cell = self.model.grid.get_cell_list_contents([self.pos])
-
-                    for obj in this_cell:
-                        if isinstance(obj, Resources):
-                            resourcesPellet = obj
-                            resourcesP = resourcesPellet.resources
-                            if resourcesP > 3:
-                                resourcesPellet.resources = resourcesPellet.resources - 3
-                                self.resources = 3
-                            else:
-                                self.resources = resourcesP
-                                resourcesPellet.resources = 0
-                            self.carrying = True
-                else:##
-                    noise = self.random.random()
-                    if noise > self.certainty:
-                        # print("uncertain")
-                        self.goal()
-
-                    self.move_towards(self.futurepos)
-
-                    if self.pos == self.futurepos:
-                        self.goal()
-            else:
-                #  print("go to central place")
-                # noise = self.random.random()
-                # if noise < self.threshold:
-                #    # print("uncertain")
-                #     self.random_move()
-                # else:
-                self.move_towards(self.cp.pos)
-
-               # print("Participant move to central place " + str(self.cp.pos))
-                this_cell = self.model.grid.get_cell_list_contents([self.pos])
-                for obj in this_cell:
-                    if isinstance(obj, CentralPlace):
-                        centralPlaceMine = obj
-                        if centralPlaceMine.fromParticipant:
-                            if centralPlaceMine == self.cp:
-                                centralPlaceMine.resources = centralPlaceMine.resources + self.resources
-                                self.resources = 0
-                                self.carrying = False
-                                self.model.resourcesParticipants = centralPlaceMine.resources
-                               # print(" Actualizando resources participant " + str(self.model.resourcesParticipants))
-
-        this_cell = self.model.grid.get_cell_list_contents([self.pos])
-        for obj in this_cell:
-            if isinstance(obj, BreadCrumb):
-                if self.pos in self.model.locationsExploitation:
-
-                    self.model.stepsExploiting = self.model.stepsExploiting + 1
                 else:
-                    if self.carrying:
+                    #  print("go to central place")
+                    # noise = self.random.random()
+                    # if noise < self.threshold:
+                    #    # print("uncertain")
+                    #     self.random_move()
+                    # else:
+                    self.move_towards(self.cp.pos)
+
+                   # print("Participant move to central place " + str(self.cp.pos))
+                    this_cell = self.model.grid.get_cell_list_contents([self.pos])
+                    for obj in this_cell:
+                        if isinstance(obj, CentralPlace):
+                            centralPlaceMine = obj
+                            if centralPlaceMine.fromParticipant:
+                                if centralPlaceMine == self.cp:
+                                    centralPlaceMine.resources = centralPlaceMine.resources + self.resources
+                                    self.resources = 0
+                                    self.carrying = False
+                                    self.model.resourcesParticipants = centralPlaceMine.resources
+                                   # print(" Actualizando resources participant " + str(self.model.resourcesParticipants))
+
+            this_cell = self.model.grid.get_cell_list_contents([self.pos])
+            for obj in this_cell:
+                if isinstance(obj, BreadCrumb):
+                    if self.pos in self.model.locationsExploitation:
+
                         self.model.stepsExploiting = self.model.stepsExploiting + 1
                     else:
-                        self.model.stepsExploring = self.model.stepsExploring + 1
+                        if self.carrying:
+                            self.model.stepsExploiting = self.model.stepsExploiting + 1
+                        else:
+                            self.model.stepsExploring = self.model.stepsExploring + 1
 
-                if not obj.visited:
-                    obj.visited = True
-                return
+                    if not obj.visited:
+                        obj.visited = True
+                    return
 
 
 

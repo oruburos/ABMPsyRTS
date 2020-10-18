@@ -7,6 +7,10 @@ import itertools
 from psyrts.agents import Competitor, Predator, Participant, Resources, CentralPlace, BreadCrumb
 from psyrts.schedule import RandomActivationByBreed
 
+
+import numpy as np
+
+
 # Start of datacollector functions
 def resourcesRatio(model):
     if model.resourcesParticipants == 0:
@@ -38,14 +42,14 @@ def exploitation(model):
         return  resourcesRatio(model) * propEX
 
 
-def number_visited(model ,mode_exploration=True):
 
+def mapExplored(model):
     next_moves = []
-    if mode_exploration:
-        next_moves = model.locationsExploration
-    else:
-        next_moves = model.locationsExploitation
-  # print( "size grid " + str(len(next_moves)))
+
+    next_moves = model.locationsExploration
+
+    next_moves = next_moves + model.locationsExploitation
+    # print( "size grid " + str(len(next_moves)))
     visitadas = 0
     for cells in next_moves:
         this_cell = model.grid.get_cell_list_contents(cells)
@@ -53,6 +57,28 @@ def number_visited(model ,mode_exploration=True):
             if isinstance(obj, BreadCrumb):
                 if obj.visited:
                     visitadas = visitadas + 1
+
+    return visitadas/400
+
+def number_visited(model ,mode_exploration=True):
+
+    next_moves = []
+    if mode_exploration:
+        next_moves = model.locationsExploration
+    else:
+        next_moves = model.locationsExploitation
+
+    visitadas = 0
+    for cells in next_moves:
+        this_cell = model.grid.get_cell_list_contents(cells)
+        for obj in this_cell:
+            if isinstance(obj, BreadCrumb):
+                if obj.visited:
+                    potential = model.grid.get_neighborhood(obj.pos, True, True, 2)
+                    for obj2 in this_cell:
+                        if isinstance(obj2, BreadCrumb):
+                            if obj2.visited:
+                                visitadas = visitadas + 1
 
     return visitadas
 
@@ -99,7 +125,7 @@ class PsyRTSGame(Model):
 
     def __init__(self, height=20, width=20, visibility = False ,initial_competitors=1,
                  initial_explorers=1, initial_predators=1  ,
-                 impactTotalVisibility =.9 , impactPartialVisibility = .5, impactParticipants = .01,
+                 impactTotalVisibility =.9 , impactPartialVisibility = .5, impactParticipants = .05,
                  impactCompetitors= .02, impactPredators= .02 ):
         '''
         Create a new PsyRTS  model with the given parameters.
@@ -134,8 +160,15 @@ class PsyRTSGame(Model):
 
 
 #parameters model
-        self.impactTotalVisibility = impactTotalVisibility
-        self.impactPartialVisibility  = impactPartialVisibility
+        mu, sigma = impactTotalVisibility, 0.02  # mean and standard deviation
+        tv = np.random.normal(mu, sigma)
+
+
+        mu, sigma = impactPartialVisibility, 0.02  # mean and standard deviation
+        pv = np.random.normal(mu, sigma)
+
+        self.impactTotalVisibility = tv
+        self.impactPartialVisibility  = pv
         self.impactParticipants = impactParticipants
         self.impactCompetitors = impactCompetitors
         self.impactPredators = impactPredators
@@ -169,7 +202,8 @@ class PsyRTSGame(Model):
                 "Exploration": exploration ,
                 "Exploitation": exploitation,
                 "ResourcesRatio": resourcesRatio,
-                "ProportionEE": proportionEE
+                "ProportionEE": proportionEE,
+                "MapExplored": mapExplored
                              })   #reporto a datos
 
         centralplaceparticipant = CentralPlace(self.next_id(), locationCPParticipant, self, True)
@@ -221,7 +255,8 @@ class PsyRTSGame(Model):
     def updateUncertainty(self):
 
         # information que gana por conocer el ambiente
-        participantExploration = (number_visited(self, True) +number_visited(self, False))/400
+        #participantExploration = (number_visited(self, True) +number_visited(self, False))/400
+        participantExploration = mapExplored(self)
 
 
         uncertaintyVisibility = 0
@@ -245,10 +280,10 @@ class PsyRTSGame(Model):
 
         #self.uncertainty = self.uncertainty/atencionmultitasking
 
-
-        if self.uncertainty < 0 or self.uncertainty >1:
-            print(" ERROR ********************************************************************** MODEL")
-        print("explored map {} uncertainty  in the environment {} ".format ( participantExploration, self.uncertainty ))
+        #
+        # if self.uncertainty < 0 or self.uncertainty >1:
+        #     print(" ERROR ********************************************************************** MODEL")
+        # print("explored map {} uncertainty  in the environment {} ".format ( participantExploration, self.uncertainty ))
 
 
 
