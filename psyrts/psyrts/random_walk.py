@@ -3,7 +3,8 @@ Generalized behavior for random walking, one grid cell at a time.
 '''
 
 from mesa import Agent
-
+import random
+import numpy as np
 
 class RandomWalker(Agent):
     '''
@@ -58,16 +59,32 @@ class RandomWalker(Agent):
 
 
 
+    def randomPos(self):
+        x = random.random()
+        xi = int((x * 20))
+        y = random.random()
+        yi = int((y * 20))
+
+        return (xi, yi)
+
+    def randomPosScreen(self):
+
+        x = np.random.beta( 1.5, 1.5)
+        y = np.random.beta(1.5, 1.5)
+
+
+        xi = int((x * 20))
+        y = random.random()
+        yi = int((y * 20))
+
+        return (xi ,  yi )
+
     def move_towards(self, cosa):
 
         posactual = self.pos
         newx= 0
         newy = 0
         direction =cosa
-
-
-
-
 
 
         if posactual[0] == direction[0]: #same x
@@ -119,64 +136,124 @@ class RandomWalker(Agent):
 
     def move_away(self, cosa):
 
+
+
         posactual = self.pos
         newx= 0
         newy = 0
-        direction = cosa
-        if posactual[0] == direction[0]:
+
+
+
+        cosanegadax = 19 - cosa[0]
+        cosanegaday = 19 - cosa[1]
+
+        direction =(cosanegadax, cosanegaday)
+
+        if posactual[0] == direction[0]: #same x
+
+            newx = posactual[0]
+
+
             if posactual[1] < direction[1]:
-                newx =posactual[0] +1
-                newy = posactual[1]-1
-                if newy<0:
-                    newy=0
-                if newx>19:
-                    newx=19
+                newy = posactual[1]+1
+            elif posactual[1] > direction[1]:
+                newy = posactual[1] - 1
             else:
-                newx = posactual[0] +1
-                newy = posactual[1] + 1
-                if newx>19:
-                    newx=19
-                if newy>19:
-                    newy=19
-        elif posactual[0] < direction[0]:
+                newy = posactual[1]
+
+        elif posactual[0] < direction[0]: #
+            newx = posactual[0] + 1
             if posactual[1] < direction[1]:
-                newx = posactual[0] -1
+                newy = posactual[1] + 1
+
+            elif posactual[1] > direction[1]:
                 newy = posactual[1] - 1
 
-                if newx<0:
-                   newx=0
-                if newy < 0:
-                   newy = 0
-            else:
-                newx = posactual[0] -1
-                newy = posactual[1] + 1
-
-                if newx<0:
-                    newx=0
-                if newy > 19:
-                   newy = 19
-
+            else:# =
+                newy = posactual[1]
 
         else:
+            newx = posactual[0] - 1
             if posactual[1] < direction[1]:
-                newx = posactual[0] +1
-                newy = posactual[1] - 1
-                if newx > 19:
-                    newx = 19
-                if newy < 0:
-                   newy = 0
-            else:
-
-                newx = posactual[0] +1
                 newy = posactual[1] + 1
+            elif posactual[1] > direction[1]:
+                newy = posactual[1] - 1
+            else:
+                newy = posactual[1]
 
-                if newx > 19:
-                    newx = 19
-                if newy > 19:
-                    newy = 19
+        if newx < 0:
+            newx = 0
+        if newy < 0:
+            newy = 0
 
-        next_move = (newx, newy)
+        if newy > 19:
+            newy = 19
+        if newx > 19:
+            newx = 19
 
-       # print( "my pos " + str(self.pos) + " my goal " + str(direction) + " next move " + str(next_move))
-        self.model.grid.move_agent(self, next_move)
 
+
+
+       #
+       #  posactual = self.pos
+       #  newx= 0
+       #  newy = 0
+       #
+       #  direction = cosa
+       #  if posactual[0] == direction[0]:
+       #      if posactual[1] < direction[1]:
+       #          newx =posactual[0] +1
+       #          newy = posactual[1]-1
+       #          if newy<0:
+       #              newy=0
+       #          if newx>19:
+       #              newx=19
+       #      else:
+       #          newx = posactual[0] +1
+       #          newy = posactual[1] + 1
+       #          if newx>19:
+       #              newx=19
+       #          if newy>19:
+       #              newy=19
+       #  elif posactual[0] < direction[0]:
+       #      if posactual[1] < direction[1]:
+       #          newx = posactual[0] -1
+       #          newy = posactual[1] - 1
+       #
+       #          if newx<0:
+       #             newx=0
+       #          if newy < 0:
+       #             newy = 0
+       #      else:
+       #          newx = posactual[0] -1
+       #          newy = posactual[1] + 1
+       #
+       #          if newx<0:
+       #              newx=0
+       #          if newy > 19:
+       #             newy = 19
+       #
+       #
+       #  else:
+       #      if posactual[1] < direction[1]:
+       #          newx = posactual[0] +1
+       #          newy = posactual[1] - 1
+       #          if newx > 19:
+       #              newx = 19
+       #          if newy < 0:
+       #             newy = 0
+       #      else:
+       #
+       #          newx = posactual[0] +1
+       #          newy = posactual[1] + 1
+       #
+       #          if newx > 19:
+       #              newx = 19
+       #          if newy > 19:
+       #              newy = 19
+       #
+       #  next_move = (newx, newy)
+       #
+       # # print( "my pos " + str(self.pos) + " my goal " + str(direction) + " next move " + str(next_move))
+       #  self.model.grid.move_agent(self, next_move)
+       #

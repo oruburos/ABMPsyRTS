@@ -13,7 +13,7 @@ bdFinalData = "FinalDataPhD"
 
 engine = create_engine(mysqlServer+bdFinalData)
 #df = pd.read_csv("PsyRTSModelBorrar.csv")
-df = pd.read_csv("PsyRTSModelOptimo.csv")
+df = pd.read_csv("PsyRTSTest1.csv")
 
 pd.set_option("display.max_colwidth", None)
 #df.to_sql('prolificE{}'.format(experiment),con= engine ,if_exists ='append' , index= False)
@@ -122,12 +122,12 @@ df.drop(indexNames, inplace=True)
 df[['balance_ee','performance'] ] = df.apply(balanceperformance, axis=1)
 
 print(df.shape)
-#df.to_csv("Limpio.csv")
+df.to_csv("PsyRTSTest1Limpio.csv")
 
 
 
 
-df.to_sql("experiments_generative_model",con= engine ,if_exists ='replace' , index= False)
+#df.to_sql("experiments_generative_model",con= engine ,if_exists ='replace' , index= False)
 #df.to_sql("experiments_generative_model",conn)
 
 

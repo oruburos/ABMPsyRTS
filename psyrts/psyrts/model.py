@@ -78,8 +78,8 @@ def track_experiment(model):
     return model.uid
 def proportionEE(model):
 
-    print( "steps en exploracion " + str( model.stepsExploring))
-    print("steps en explotacion " + str(model.stepsExploiting))
+   # print( "steps en exploracion " + str( model.stepsExploring))
+   # print("steps en explotacion " + str(model.stepsExploiting))
     prope = model.stepsExploiting + model.stepsExploring
     return prope
 
@@ -98,7 +98,9 @@ class PsyRTSGame(Model):
     description = 'A model for simulating participants running the different experiments.'
 
     def __init__(self, height=20, width=20, visibility = False ,initial_competitors=1,
-                 initial_explorers=1, initial_predators=1):
+                 initial_explorers=1, initial_predators=1  ,
+                 impactTotalVisibility =.9 , impactPartialVisibility = .5, impactParticipants = .01,
+                 impactCompetitors= .02, impactPredators= .02 ):
         '''
         Create a new PsyRTS  model with the given parameters.
 
@@ -121,7 +123,7 @@ class PsyRTSGame(Model):
 
         self.schedule = RandomActivationByBreed(self)
         self.grid = MultiGrid(self.height, self.width, torus=False)
-        self.noise = 0.0
+        self.uncertainty = 0.0
         self.resources= 0
         self.resourcesParticipants =0
         self.resourcesCompetitors = 0
@@ -130,6 +132,13 @@ class PsyRTSGame(Model):
         self.stepsExploring = 0
         self.stepsExploiting = 0
 
+
+#parameters model
+        self.impactTotalVisibility = impactTotalVisibility
+        self.impactPartialVisibility  = impactPartialVisibility
+        self.impactParticipants = impactParticipants
+        self.impactCompetitors = impactCompetitors
+        self.impactPredators = impactPredators
 
         self.TotalCells = next_moves = self.grid.get_neighborhood( (10,10), True, True, 11)
         locationsResources = [(4,3) , (16,3), (3,10) , (10,10),(17,10) , (16,17),(4,17)  ]
@@ -209,32 +218,46 @@ class PsyRTSGame(Model):
         self.datacollector.collect(self)
 
 
-    def updateNoise(self):
+    def updateUncertainty(self):
 
         # information que gana por conocer el ambiente
         participantExploration = (number_visited(self, True) +number_visited(self, False))/400
 
-        #friction por manejar mas jugadores
 
-        atencionmultitasking = 1 + (.05*self.schedule.get_breed_count(Participant) )
+        uncertaintyVisibility = 0
 
-        #print("How confident I am in the nevironment " + str(participantExploration))
         if self.visibility:
-            #self.noise = 0.35 * (1-participantExploration) muy bien
-            self.noise = .4 * (1-participantExploration)
+            uncertaintyVisibility  =   self.impactTotalVisibility
         else:
-            self.noise = 0.55 * (1-participantExploration)
+            uncertaintyVisibility  =  self.impactPartialVisibility
 
-        self.noise = self.noise * (atencionmultitasking)
-        print( "noise0 ", self.noise)
-        self.noise = self.noise + (( .03)*self.schedule.get_breed_count(Competitor))
-        self.noise = self.noise + ((.03) * self.schedule.get_breed_count(Predator))
+
+
+        self.uncertainty = uncertaintyVisibility* (1-participantExploration)
+
+        #gaininginformation = self.impactTotalVisibility * self.impactParticipants * self.schedule.get_breed_count(                Participant)
+
+
+           # gaininginformation = self.impactPartialVisibility * self.impactParticipants * self.schedule.get_breed_count(                Participant)
+
+        # por manejar mas jugadores
+        #atencionmultitasking =  1 -  (self.impactParticipants * self.schedule.get_breed_count(Participant))
+
+        #self.uncertainty = self.uncertainty/atencionmultitasking
+
+
+        if self.uncertainty < 0 or self.uncertainty >1:
+            print(" ERROR ********************************************************************** MODEL")
+        print("explored map {} uncertainty  in the environment {} ".format ( participantExploration, self.uncertainty ))
+
+
+
 
     def step(self):
 
         self.datacollector.collect(self)
         self.schedule.step()
-        self.updateNoise()
+        self.updateUncertainty()
         # collect data
 
         participantsAlive = self.schedule.get_breed_count(Participant)
@@ -253,4 +276,5 @@ class PsyRTSGame(Model):
     def run_model(self, step_count=150):
         for i in range(step_count):
             self.step()
+
 
