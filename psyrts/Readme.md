@@ -42,6 +42,7 @@ Then open your browser to [http://127.0.0.1:8521/](http://127.0.0.1:8521/) and p
 
 This model is based on some of these ideas:
 
- Osman, M & Verduga, O (2019) The future of problem solving research is not complexity, but dynamic uncertainty https://journals.ub.uni-heidelberg.de/index.php/jddm/article/view/69300
- Verduga, O & Osman, M (2019) PsyRTS: a Web Platform for Experiments in Human Decision-Making in RTS Environments https://ieeexplore.ieee.org/document/8848101
+ * Osman, M & Verduga, O (2019) The future of problem solving research is not complexity, but dynamic uncertainty https://journals.ub.uni-heidelberg.de/index.php/jddm/article/view/69300
+  
+  * Verduga, O & Osman, M (2019) PsyRTS: a Web Platform for Experiments in Human Decision-Making in RTS Environments https://ieeexplore.ieee.org/document/8848101
 
