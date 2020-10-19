@@ -85,7 +85,8 @@ class MyTextElement(TextElement):
         mapcoverage = mapExplored(model)
 
         #return "Total Resources: {} Resources Part:{}  Resources Co: {}  <br>  Ratio :{:2.3f}   Exploration :{:2.3f} Exploitation:{:2.3f}  Performance {:2.3f} <br>  Proportion :{:2.3f} Balance: {:2.3f}".format( totalResources , resourcesParticipant , resourcesCompetitor, resourceRatio, explorationS, exploitationS,performance, actividad, balance )
-        return "Total Resources: {} ResPart:{} RescoM:{}   Ratio :{:2.3f} <br>  Exploration :{:2.3f} Exploitation:{:2.3f}  Performance {:2.3f} <br>  Proportion Map Explored :{:2.3f} <br> Balance: {:2.3f} ".format(
+        return "<br>Total Resources: {} Resources Participant:{} Resources Competitor:{}" \
+               "<br>   Ratio :{:2.3f} <br>  Exploration :{:2.3f} Exploitation:{:2.3f}  Performance {:2.3f} <br>  Proportion Map Explored :{:2.3f} <br> Balance: {:2.3f} ".format(
             totalResources, resourcesParticipant, resourcesCompetitor, resourceRatio, explorationS, exploitationS,
             performance, mapcoverage, balance)
 
