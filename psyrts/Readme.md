@@ -2,10 +2,17 @@
 
 ## Summary
 
-A simple model, consisting of three agent types: participant, competitor, and predators. The participant, predator and competitors wander around the grid at random. Participants and Competitors forage for resources, and predators preys participants and competitors if they end up on the same grid cell.
+A agent based model, consisting of three agent types: participant, competitor, and predators.
+ The participant, predator and competitors wander around the environment.
+  
+  Participants and Competitors forage for resources, and predators prey participants and competitors. 
+  If a Participant or Competitor is in the same Cell than a Resource, it will collect an amount.if they end up on the same grid cell resources are collected Or Pr
+  If a Predator ends in the same Cell than a Participant or Competitor it will attack, eventually predating them.
+  
+  
+ 
 
-
-The model is tests and demonstrates several concepts a:
+The model helped us to test hypotheses stated in my PhD dissertation, demonstrating the impact of Visibility, Uncertainty Reduction, Information Gaining, and Social Interaction in a Foraging Task. In particular:
  -  Impact of Visibility in Exploration
  -  Multiple agent types affecting Exploitation
  
@@ -40,9 +47,9 @@ Then open your browser to [http://127.0.0.1:8521/](http://127.0.0.1:8521/) and p
 
 ## Further Reading
 
-This model is based on some of these ideas:
+This model is based on some of ideas discussed in:
 
- * Osman, M & Verduga, O (2019) The future of problem solving research is not complexity, but dynamic uncertainty https://journals.ub.uni-heidelberg.de/index.php/jddm/article/view/69300
+ * Osman, M & Verduga, O (2019) *"The future of problem solving research is not complexity, but dynamic uncertainty"* https://journals.ub.uni-heidelberg.de/index.php/jddm/article/view/69300
   
- * Verduga, O & Osman, M (2019) PsyRTS: a Web Platform for Experiments in Human Decision-Making in RTS Environments https://ieeexplore.ieee.org/document/8848101
+ * Verduga, O & Osman, M (2019) *" PsyRTS: a Web Platform for Experiments in Human Decision-Making in RTS Environments"* https://ieeexplore.ieee.org/document/8848101
 
