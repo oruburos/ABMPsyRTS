@@ -14,6 +14,7 @@ class Participant(RandomWalker):
 
     def __init__(self, unique_id, pos, model, moore , cp):
         super().__init__(unique_id, pos, model, moore=moore)
+        self.id = unique_id
         self.carrying = False
         self.cp = cp
         self.futurepos = (0, 0)
@@ -117,6 +118,7 @@ class Participant(RandomWalker):
         '''
 
         #participants not always select an unit, and the more units, the more chances to not play it
+
 
         multitaskingFriction = (1 - self.model.impactParticipants ) ** self.model.initial_explorers
 

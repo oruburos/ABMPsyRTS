@@ -51,7 +51,7 @@ This model is based on some of ideas discussed in:
 
  * Osman, M & Verduga, O (2019) *"The future of problem solving research is not complexity, but dynamic uncertainty"* https://journals.ub.uni-heidelberg.de/index.php/jddm/article/view/69300
   
-  and 4 Experiments with around 800 humans using the following platform: 
+  and 4 Experiments with around 800 human participants using the following platform: 
   
  * Verduga, O & Osman, M (2019) *" PsyRTS: a Web Platform for Experiments in Human Decision-Making in RTS Environments"* https://ieeexplore.ieee.org/document/8848101
 

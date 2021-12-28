@@ -15,14 +15,12 @@
 # datafinal.to_csv("PsyRTSEx3Synth.csv")
 #
 #
-
 import pandas as pd
 
 data =[]
 for i in range(3,6):
 
     data.append( pd.read_csv("model_paramsTEx1cond{}.csv".format(i)) )
-
 
 datafinal  = pd.concat(data)
 

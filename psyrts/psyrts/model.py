@@ -31,6 +31,12 @@ def exploration(model):
 
 
 
+def trajectories(model):
+
+    participants_explorer = [ (a.unique_id, a.pos) for a in model.schedule.agents if isinstance( a, Participant)]
+    return participants_explorer
+
+
 def exploitation(model):
    # return   ((number_visited( model, False) )/72) * resourcesRatio(model)
     if model.stepsExploiting + model.stepsExploring ==0:
@@ -244,8 +250,11 @@ class PsyRTSGame(Model):
                 "ResourcesRatio": resourcesRatio,
                 "ProportionEE": proportionEE,
                 "MapExplored": mapExplored,
+                "Trajectories":trajectories
 
-                             })   #reporto a datos
+                             },
+            agent_reporters={"position": lambda x: x.pos   }
+        )   #reporto a datos
 
         centralplaceparticipant = CentralPlace(self.next_id(), locationCPParticipant, self, True)
         self.grid.place_agent(centralplaceparticipant, locationCPParticipant)
