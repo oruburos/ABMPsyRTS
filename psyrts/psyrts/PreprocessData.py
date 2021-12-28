@@ -12,11 +12,12 @@ mysqlServer ='mysql+pymysql://root:@localhost:3308/'
 bdFinalData = "FinalDataPhD"
 
 engine = create_engine(mysqlServer+bdFinalData)
-#df = pd.read_csv("PsyRTSModelBorrar.csv")
-df = pd.read_csv("PsyRTSTest1.csv")
+#df = pd.read_csv("PsyRTSTest1.csv")
+
+df = pd.read_csv("1k-2021.csv")
+
 
 pd.set_option("display.max_colwidth", None)
-#df.to_sql('prolificE{}'.format(experiment),con= engine ,if_exists ='append' , index= False)
 
 print(df.shape)
 df2 = df.groupby(['Experiment_Synth'])['Step'].max().reset_index()
@@ -111,7 +112,6 @@ def balanceperformance(row):
 
 
 
-
 df[['experiment','condition_exp'] ] = df.apply(checkcondition, axis=1)
 
 
@@ -128,7 +128,7 @@ df.to_csv("PsyRTSTest1Limpio.csv")
 
 
 #df.to_sql("experiments_generative_model",con= engine ,if_exists ='replace' , index= False)
-#df.to_sql("experiments_generative_model",conn)
+df.to_sql("generative_model_1k_2021",con =engine)
 
 
 
