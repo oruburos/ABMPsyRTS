@@ -4,19 +4,9 @@ import matplotlib.pyplot as plt
 from sqlalchemy import create_engine
 import json
 
-
-#
-# experiment = 2
-#
-mysqlServer ='mysql+pymysql://root:@localhost:3308/'
-bdFinalData = "FinalDataPhD"
-
-engine = create_engine(mysqlServer+bdFinalData)
-#df = pd.read_csv("PsyRTSTest1.csv")
-
-df = pd.read_csv("1k-2021.csv")
-
-
+inputfile = "e4bis.csv"
+outputfile = "e4bisCORTOFINAL.csv"
+df = pd.read_csv(inputfile)
 pd.set_option("display.max_colwidth", None)
 
 print(df.shape)
@@ -111,24 +101,23 @@ def balanceperformance(row):
 
 
 
-
 df[['experiment','condition_exp'] ] = df.apply(checkcondition, axis=1)
 
 
-print(df.shape)
+#print(df.shape)
 indexNames = df[(df['condition_exp'] == -1 )].index
 df.drop(indexNames, inplace=True)
 
 df[['balance_ee','performance'] ] = df.apply(balanceperformance, axis=1)
 
-print(df.shape)
-df.to_csv("PsyRTSTest1Limpio.csv")
+#paso tro
 
+df_minimo= df[['experiment', 'condition_exp', 'Conditions',
+       'ResourcesRatio', 'Exploitation', 'Exploration', 'balance_ee', 'performance']]
 
+print(df_minimo.columns)
 
+groups = df_minimo.groupby(['experiment', 'condition_exp'], group_keys=True).mean()
+print(groups)
 
-#df.to_sql("experiments_generative_model",con= engine ,if_exists ='replace' , index= False)
-df.to_sql("generative_model_1k_2021",con =engine)
-
-
-
+groups.to_csv(outputfile)

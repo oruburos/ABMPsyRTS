@@ -1,5 +1,41 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
+
+
+
+humandatafile = "humanE1.csv"
+synthdatafile = "synthE1.csv"
+
+
+pd.set_option("display.max_colwidth", None)
+
+human_data = pd.read_csv(humandatafile)
+synth_data = pd.read_csv(synthdatafile)
+
+print(human_data.shape)
+print(synth_data.shape)
+
+print(human_data.columns)
+print(synth_data.columns)
+
+
+metrics = { "resources":1,
+            "exploration" :3,
+            "exploitaation":2,
+            "balance":4,
+            "performance":5
+            }
+
+def get_means( metric):
+    x_values = human_data.iloc[metrics[metric] +2]
+    y_values = synth_data.iloc[metrics[metric] + 2]
+
+    return x_values, y_values
+
+
+
+
 
 #resources for visibility
 
@@ -147,6 +183,6 @@ plt.setp(f.get_legend().get_texts(), fontsize='12')
 plt.setp(f.get_legend().get_title(), fontsize='16')
 
 plt.tight_layout()
-plt.savefig('r2Performance.png')
+plt.savefig('../figures/r2Performance.png')
 plt.show()
 

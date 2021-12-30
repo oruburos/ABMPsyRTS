@@ -49,35 +49,6 @@ def exploitation(model):
         return  resourcesRatio(model) * propEX
 
 
-# def mapExplored(model):
-#
-#
-#     next_moves = []
-#     next_moves = model.locationsExploration
-#     next_moves = next_moves + model.locationsExploitation
-#     visitadas = 0
-#
-#     celdas = []
-#     for cells in next_moves:
-#         this_cell = model.grid.get_cell_list_contents(cells)
-#         for obj in this_cell:
-#             if isinstance(obj, BreadCrumb):
-#                 if obj.visited:
-#                     potential = model.grid.get_neighborhood(obj.pos, True, True, 1)
-#                     celdas = celdas + potential
-#
-#
-#     for obj2 in celdas:
-#         this_cell = model.grid.get_cell_list_contents(obj2)
-#         for obj3 in this_cell:
-#             if isinstance(obj3, BreadCrumb):
-#                 visitadas = visitadas + 1
-#
-#     print("alcanzables ", visitadas)
-#     return visitadas/400
-#
-#
-
 def mapExplored(model):
     next_moves = []
 
@@ -93,32 +64,6 @@ def mapExplored(model):
                     visitadas = visitadas + 1
 
     return visitadas/400
-#
-
-#
-# def number_visited(model ,mode_exploration=True):
-#
-#     next_moves = []
-#     if mode_exploration:
-#         next_moves = model.locationsExploration
-#     else:
-#         next_moves = model.locationsExploitation
-#
-#     visitadas = 0
-#     for cells in next_moves:
-#         this_cell = model.grid.get_cell_list_contents(cells)
-#         for obj in this_cell:
-#             if isinstance(obj, BreadCrumb):
-#                 if obj.visited:
-#                     # potential = model.grid.get_neighborhood(obj.pos, True, True, 2)
-#                     # for obj2 in this_cell:
-#                     #     if isinstance(obj2, BreadCrumb):
-#                     #         if obj2.visited:
-#                     visitadas = visitadas + 1
-#
-#     print("number visited ", visitadas)
-#     return visitadas
-
 
 def resources_competitors(model):
     return model.resourcesCompetitors
@@ -160,9 +105,12 @@ class PsyRTSGame(Model):
     description = 'A model for simulating participants running the different experiments.'
 
     def __init__(self, height=20, width=20, visibility = False ,initial_competitors=0,
-                 initial_explorers=1, initial_predators=0  ,
-                 impactTotalVisibility =.3 , impactPartialVisibility = .35, impactParticipants = .0,
-                 impactCompetitors= .0, impactPredators= .0 ):
+                 initial_explorers=1, initial_predators=0,
+                 impactTotalVisibility =.2 ,
+                 impactPartialVisibility = .2,
+                 impactParticipants = .1,
+                 impactCompetitors= .08,
+                 impactPredators= .08 ):
         '''
         Create a new PsyRTS  model with the given parameters.
 
@@ -201,9 +149,6 @@ class PsyRTSGame(Model):
         if  tv < 0:
             tv = 0
        # print( "Starting with tv " , tv)
-
-
-
 
         mu, sigma = impactPartialVisibility, 0.05  # mean and standard deviation
         pv = np.random.normal(mu, sigma)
@@ -342,19 +287,17 @@ class PsyRTSGame(Model):
 
         participantsAlive = self.schedule.get_breed_count(Participant)
         if participantsAlive <=0:
-            print("Stop Participants dead")
+            #print("Stop Participants dead")
             self.running = False
 
         if self.resourcesCompetitors +self.resourcesParticipants == self.resources:
-            print("Stop No More Resources")
+            #print("Stop No More Resources")
             self.running = False
 
         if self.schedule.steps>150:
-            print("toomany steps")
+            #print("toomany steps")
             self.running = False
 
     def run_model(self, step_count=150):
         for i in range(step_count):
             self.step()
-
-

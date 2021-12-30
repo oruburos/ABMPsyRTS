@@ -10,31 +10,31 @@ from mesa.time import RandomActivation
 import numpy as np
 import pandas as pd
 
-model_paramsT = {
+model_paramsT1 = {
                 'visibility': [True, False],
-                "initial_explorers": [1,3,5],
+                "initial_explorers": [5],
                 "initial_competitors": [ 0 ],
                 "initial_predators": [ 0]
 }
 
-model_paramsP = {
+model_paramsSocial = {
                 'visibility': [ False],
-                "initial_explorers": [1,3,5],
-                "initial_competitors": [ 0, 3 , 5],
-                "initial_predators": [ 0, 3, 5]
+                "initial_explorers": [3,5],
+                "initial_competitors": [ 5,3],
+                "initial_predators": [3,5]
 }
 
+filetosave ="e4bis.csv"
 
 br = BatchRunner(PsyRTSGame,
-                 model_paramsT,
-                 iterations= 10,
+                 model_paramsSocial,
+                 iterations= 5,
                  max_steps=150,
                  model_reporters={"Data Collector": lambda m: m.datacollector})
 
 if __name__ == '__main__':
     br.run_all()
     br_df = br.get_model_vars_dataframe()
-    #br_step_data =  br_df
     br_step_data = pd.DataFrame()
 
     for i in range(len(br_df["Data Collector"])):
@@ -43,4 +43,4 @@ if __name__ == '__main__':
             br_step_data = br_step_data.append(i_run_data, ignore_index=True)
 
     concat = br_step_data
-    concat.to_csv("1k-2021.csv")
+    concat.to_csv(filetosave)
